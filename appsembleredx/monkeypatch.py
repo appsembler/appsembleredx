@@ -15,12 +15,6 @@ def get_CourseDescriptor_mixins():
 	return tuple(new_mixins)
 
 
-orig_CourseFields = course_module.CourseFields
-if app_settings.USE_OPEN_ENDED_CERTS_DEFAULTS:
-	course_module.CourseFields.certificates_display_behavior.default = "early_with_info"
-	course_module.CourseFields.certificates_show_before_end.default = True
-
-
 orig_CourseDescriptor = course_module.CourseDescriptor
 CDbases = course_module.CourseDescriptor.__bases__
 course_module.CourseDescriptor.__bases__ = get_CourseDescriptor_mixins() + CDbases
