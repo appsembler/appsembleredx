@@ -3,7 +3,7 @@ Reusable mixins for XBlocks and/or XModules
 """
 
 from django.conf import settings
-from xblock.fields import Scope, String, Float, XBlockMixin
+from xblock.fields import Scope, String, Float, Boolean, XBlockMixin
 
 from . import app_settings
 
@@ -74,6 +74,15 @@ class XMLDefinitionChainingMixin(XBlockMixin):
         return definition, children
 
 
+class CertificatesExtensionMixin(XBlockMixin):
+    """
+    Mixin to store custom fields about certificates
+    """
+    # this is hacky
+    cert_defaults_set = Boolean(
+        default=False,
+        scope=Scope.content)
+ 
 class CreditsMixin(XBlockMixin):
     """
     Mixin that allows an author to specify a credit provider and a number of credit

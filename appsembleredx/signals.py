@@ -33,16 +33,19 @@ def _change_cert_defaults_on_pre_publish(sender, course_key, **kwargs):  # pylin
     """
     # has to be done this way since it's not possible to monkeypatch the default attrs on the 
     # CourseFields fields
-    # TODO: cache so we know we've done this for this course.  We do want Studio user to be able
-    # to change these defaults so we only want to do this once
+
     if not USE_OPEN_ENDED_CERTS_DEFAULTS:
         return
 
     store = modulestore()
     course = store.get_course(course_key)
+    if course.cert_defaults_set:
+        return
+
     course.certificates_display_behavior = 'early_with_info'
     course.certificates_show_before_end = True
     course.cert_html_view_enabled = True
+    course.cert_defaults_set = True
     course.save()
     store.update_item(course, course._edited_by)
 
