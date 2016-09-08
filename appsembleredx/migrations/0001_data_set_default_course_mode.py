@@ -30,5 +30,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(change_course_mode),
+        migrations.RunPython(change_audit_course_modes),
     ]
