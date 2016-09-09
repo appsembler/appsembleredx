@@ -6,6 +6,7 @@ from django.dispatch.dispatcher import receiver
 from xmodule.modulestore.django import SignalHandler, modulestore
 
 from course_modes.models import CourseMode, CourseModeExpirationConfig
+from certificates import models as cert_models
 
 from appsembleredx.app_settings import (
     DEFAULT_COURSE_MODE_SLUG, 
@@ -13,6 +14,9 @@ from appsembleredx.app_settings import (
     USE_OPEN_ENDED_CERTS_DEFAULTS,
     ALWAYS_ENABLE_SELF_GENERATED_CERTS
 )
+
+
+DEFAULT_CERT = {u'certificates': [{u'course_title': u'', u'name': u'Default', u'is_active': True, u'signatories': [], u'version': 1, u'editing': False, u'description': u'Default certificate'}]}
 
 
 @receiver(SignalHandler.course_published)
@@ -69,10 +73,22 @@ def _enable_self_generated_certs_on_publish(sender, course_key, **kwargs):  # py
     enabled.save()
 
 
-@receiver(SignalHandler.course_published)
-def _activate_default_cert_on_publish(sender, course_key, **kwargs):  # pylint: disable=unused-argument
+@receiver(SignalHandler.pre_publish)
+def _make_default_active_certificate(sender, course_key, **kwargs):  # pylint: disable=unused-argument
     """
-    Activate a default HTML certificate on course publish
+    Create an active default certificate on the course
     """
     if not USE_OPEN_ENDED_CERTS_DEFAULTS:
         return
+
+    store = modulestore()
+    course = store.get_course(course_key)
+    if course.active_default_cert_created:
+        return        
+
+    new_cert = DEFAULT_CERT
+    new_cert['certificates'][0]['id'] = cert_models._make_uuid()
+    course.certificates.update(new_cert)
+    course.active_default_cert_created = True 
+    course.save()
+    store.update_item(course, course._edited_by)

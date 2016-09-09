@@ -78,8 +78,12 @@ class CertificatesExtensionMixin(XBlockMixin):
     """
     Mixin to store custom fields about certificates
     """
-    # this is hacky
+    # store whether we have set defaults for cert-related adv. settings
     cert_defaults_set = Boolean(
+        default=False,
+        scope=Scope.content)
+    # store whether we have created a default active cert
+    active_default_cert_created = Boolean(
         default=False,
         scope=Scope.content)
  
