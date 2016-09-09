@@ -7,8 +7,12 @@ from xmodule.modulestore.django import SignalHandler, modulestore
 
 from course_modes.models import CourseMode, CourseModeExpirationConfig
 
-from appsembleredx.app_settings import (DEFAULT_COURSE_MODE_SLUG, 
-    mode_name_from_slug, USE_OPEN_ENDED_CERTS_DEFAULTS)
+from appsembleredx.app_settings import (
+    DEFAULT_COURSE_MODE_SLUG, 
+    mode_name_from_slug, 
+    USE_OPEN_ENDED_CERTS_DEFAULTS,
+    ALWAYS_ENABLE_SELF_GENERATED_CERTS
+)
 
 
 @receiver(SignalHandler.course_published)
@@ -43,11 +47,27 @@ def _change_cert_defaults_on_pre_publish(sender, course_key, **kwargs):  # pylin
         return
 
     course.certificates_display_behavior = 'early_with_info'
-    course.certificates_show_before_end = True
+    course.certificates_show_before_end = True  # deprecated anyhow
     course.cert_html_view_enabled = True
     course.cert_defaults_set = True
+    course.issue_badges = False
     course.save()
     store.update_item(course, course._edited_by)
+
+
+@receiver(SignalHandler.course_published)
+def _enable_self_generated_certs_on_publish(sender, course_key, **kwargs):  # pylint: disable=unused-argument
+    """
+    If feature is enabled, always enable self generated certs on published
+    courses
+    """
+    if not ALWAYS_ENABLE_SELF_GENERATED_CERTS:
+        return
+    store = modulestore()
+    course = store.get_course(course_key)
+    enabled = CertificateGenerationCourseSetting(course_key=course_key, enabled=True)
+    enabled.save()
+
 
 @receiver(SignalHandler.course_published)
 def _activate_default_cert_on_publish(sender, course_key, **kwargs):  # pylint: disable=unused-argument
