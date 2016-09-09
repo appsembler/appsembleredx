@@ -8,7 +8,7 @@ from certificates import models
 
 class Command(BaseCommand):
     help = """Creates a CertificateGenerationConfiguration record to enable 
-	self-generated certificates.        
+    self-generated certificates.        
     """
 
     def handle(self, *args, **options):
@@ -17,9 +17,10 @@ class Command(BaseCommand):
             self.stdout.write(style(msg))
         
         try:
-        	enable =  models.CertificateGenerationConfiguration(enabled=True)
+            enable =  models.CertificateGenerationConfiguration(enabled=True)
+            enable.save()
         except:  # pylint: disable=broad-except
             stdout("Couldn't enable self-generated certs", style=self.style.ERROR)
             raise CommandError("Couldn't enable self-generated certs")
-		
-		stdout('Enabled self-generated certificates')
+        
+        stdout('Enabled self-generated certificates')
