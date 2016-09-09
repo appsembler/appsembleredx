@@ -69,7 +69,7 @@ def _enable_self_generated_certs_on_publish(sender, course_key, **kwargs):  # py
         return
     store = modulestore()
     course = store.get_course(course_key)
-    enabled = CertificateGenerationCourseSetting(course_key=course_key, enabled=True)
+    enabled = cert_models.CertificateGenerationCourseSetting(course_key=course_key, enabled=True)
     enabled.save()
 
 
