@@ -8,7 +8,7 @@ try:
     ENV_TOKENS = settings.ENV_TOKENS['APPSEMBLER_FEATURES']
 
     # courses
-    DEFAULT_COURSE_MODE_SLUG = ENV_TOKENS.get("DEFAULT_COURSE_MODE_SLUG", "HONOR")
+    DEFAULT_COURSE_MODE_SLUG = ENV_TOKENS.get("DEFAULT_COURSE_MODE_SLUG", "honor")
     mode_name_from_slug = _(DEFAULT_COURSE_MODE_SLUG.capitalize())
     DEFAULT_COURSE_MODE = course_modes_models.Mode(DEFAULT_COURSE_MODE_SLUG, mode_name_from_slug, 0, '', 'usd', None, None, None)
     
