@@ -2,7 +2,6 @@
 Reusable mixins for XBlocks and/or XModules
 """
 
-from django.conf import settings
 from xblock.fields import Scope, String, Float, Boolean, XBlockMixin
 
 from . import app_settings
@@ -42,9 +41,9 @@ class XMLDefinitionChainingMixin(XBlockMixin):
         # as arg but return an xml object
         # TODO: this may not be right
 
-        xmlobj = super(DefinitionsChainingMixin, self).definition_to_xml(resource_fs)
+        xmlobj = super(XMLDefinitionChainingMixin, self).definition_to_xml(resource_fs)
 
-        super_bases = super(DefinitionsChainingMixin, self).__bases__
+        super_bases = super(XMLDefinitionChainingMixin, self).__bases__
 
         for i in range(1, len(super_bases)):  # don't include this base
             klass = super_bases(i)
@@ -61,8 +60,8 @@ class XMLDefinitionChainingMixin(XBlockMixin):
         # return definition, children
         # TODO: this may not be right
 
-        definition, children = super(DefinitionsChainingMixin, cls).definition_from_xml(xml_object, system)
-        super_bases = super(DefinitionsChainingMixin, cls).__bases__
+        definition, children = super(XMLDefinitionChainingMixin, cls).definition_from_xml(xml_object, system)
+        super_bases = super(XMLDefinitionChainingMixin, cls).__bases__
 
         for i in range(1, len(super_bases)):  # don't include this base
             klass = super_bases(i)

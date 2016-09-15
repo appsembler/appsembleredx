@@ -1,13 +1,12 @@
 from xmodule import course_module
 from course_modes import models as course_modes_models
-from xmodule.course_module import CourseFields
 
 from appsembleredx import app_settings
 from appsembleredx import mixins
 
 
 def get_CourseDescriptor_mixins():
-	new_mixins = [mixins.XMLDefinitionChainingMixin, mixins.CertificatesExtensionMixin, ]
+	new_mixins = [mixins.CertificatesExtensionMixin, ]
 	if app_settings.ENABLE_CREDITS_EXTRA_FIELDS:
 		new_mixins.append(mixins.CreditsMixin)
 	if app_settings.ENABLE_INSTRUCTION_TYPE_EXTRA_FIELDS:
