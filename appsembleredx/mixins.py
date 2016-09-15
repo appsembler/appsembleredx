@@ -13,19 +13,27 @@ _ = lambda text: text
 CREDITS_VIEW = 'credits_view'
 INSTRUCTION_TYPE_VIEW = 'instruction_type_view'
 CREDIT_PROVIDERS = app_settings.CREDIT_PROVIDERS
+CREDIT_PROVIDERS_DEFAULT = app_settings.CREDIT_PROVIDERS_DEFAULT
 COURSE_INSTRUCTIONAL_METHODS = app_settings.COURSE_INSTRUCTIONAL_METHODS
 COURSE_FIELDS_OF_STUDY = app_settings.COURSE_FIELDS_OF_STUDY
 COURSE_INSTRUCTIONAL_METHOD_DEFAULT =  app_settings.COURSE_INSTRUCTIONAL_METHOD_DEFAULT
 COURSE_INSTRUCTION_LOCATIONS =  app_settings.COURSE_INSTRUCTION_LOCATIONS
+COURSE_INSTRUCTION_LOCATION_DEFAULT =  app_settings.COURSE_INSTRUCTION_LOCATION_DEFAULT
 
 # this is included as a mixin in xmodule.course_module.CourseDescriptor
 
 
-def build_field_values(values_dict):
+def build_field_values(values):
     """
-    pass a dict of values and return list for XBlock Field values property
+    pass values and return list for XBlock Field values property
+    can handle Dicts, sequences, and None values
     """
-    return [{"value": key, "display_name": values_dict[key]['name']} for key in values_dict.keys()]
+    if type(values).__name__ == 'dict':
+        return [{"value": key, "display_name": values[key]['name']} for key in values.keys()]
+    elif type(values).__name__ in ('tuple', 'list'):
+        return [{"value": item, "display_name": item} for item in values]
+    elif values == None:
+        return None
 
 
 class XMLDefinitionChainingMixin(XBlockMixin):
@@ -95,6 +103,7 @@ class CreditsMixin(XBlockMixin):
         display_name=_("Credit Provider"),
         help=_("Name of the entity providing the credit units"),
         values=build_field_values(CREDIT_PROVIDERS),
+        default=CREDIT_PROVIDERS_DEFAULT,
         scope=Scope.settings,
     )
 
@@ -121,7 +130,7 @@ class InstructionTypeMixin(XBlockMixin):
     field_of_study = String(display_name=_("Field of Study"),
         help=_("Topic/field classification of the course content"),
         values=build_field_values(COURSE_FIELDS_OF_STUDY),
-        scope=Scope.content,
+        scope=Scope.settings,
     )
 
     # we could create course_modes for this, but better to keep this separate.
@@ -137,6 +146,7 @@ class InstructionTypeMixin(XBlockMixin):
         display_name=_("Instruction Location"),
         help=_("Physical location of insruction; for cases where Open edX courseware is used in a specific physical setting"),
         values=build_field_values(COURSE_INSTRUCTION_LOCATIONS),
+        default=COURSE_INSTRUCTION_LOCATION_DEFAULT,
         scope=Scope.settings,
     )
 
