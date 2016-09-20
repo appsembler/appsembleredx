@@ -1,8 +1,12 @@
 """
 Reusable mixins for XBlocks and/or XModules
 """
+import inspect
+from new import instancemethod
 
 from xblock.fields import Scope, String, Float, Boolean, XBlockMixin
+from xblock import internal
+from xmodule import course_module, xml_module
 
 from . import app_settings
 
@@ -42,43 +46,96 @@ class XMLDefinitionChainingMixin(XBlockMixin):
     methods with any number of mixins.  This Mixin must be first in the chain
     for this to work
     """
+
+    # (Pdb) mro  (of self)
+    # (<class 'xblock.internal.CourseDescriptorWithMixins'>, 
+    # <class 'xmodule.course_module.CourseDescriptor'>, 
+    # <class 'appsembleredx.mixins.XMLDefinitionChainingMixin'>, 
+    # <class 'appsembleredx.mixins.CertificatesExtensionMixin'>, 
+    # <class 'appsembleredx.mixins.CreditsMixin'>, 
+    # <class 'appsembleredx.mixins.InstructionTypeMixin'>, 
+    # <class 'xmodule.course_module.CourseFields'>, 
+    # <class 'xmodule.seq_module.SequenceDescriptor'>, 
+    # <class 'xmodule.seq_module.SequenceFields'>, 
+    # <class 'xmodule.seq_module.ProctoringFields'>, 
+    # <class 'xmodule.mako_module.MakoModuleDescriptor'>, 
+    # <class 'xmodule.mako_module.MakoTemplateBlockBase'>, 
+    # <class 'xmodule.xml_module.XmlDescriptor'>, 
+    # <class 'xmodule.xml_module.XmlParserMixin'>, 
+    # <class 'xmodule.x_module.XModuleDescriptor'>, 
+    # <class 'xmodule.x_module.HTMLSnippet'>, 
+    # <class 'xmodule.x_module.ResourceTemplates'>, 
+    # <class 'lms.djangoapps.lms_xblock.mixin.LmsBlockMixin'>, 
+    # <class 'xmodule.modulestore.inheritance.InheritanceMixin'>, 
+    # <class 'xmodule.x_module.XModuleMixin'>, 
+    # <class 'xmodule.x_module.XModuleFields'>, 
+    # <class 'xblock.core.XBlock'>, 
+    # <class 'xblock.mixins.XmlSerializationMixin'>, 
+    # <class 'xblock.mixins.HierarchyMixin'>, 
+    # <class 'xmodule.mixin.LicenseMixin'>, 
+    # <class 'xmodule.modulestore.edit_info.EditInfoMixin'>, 
+    # <class 'cms.lib.xblock.authoring_mixin.AuthoringMixin'>, 
+    # <class 'xblock.XBlockMixin'>, 
+    # <class 'xblock.core.XBlockMixin'>, 
+    # <class 'xblock.mixins.ScopedStorageMixin'>, 
+    # <class 'xblock.mixins.RuntimeServicesMixin'>, 
+    # <class 'xblock.mixins.HandlersMixin'>, 
+    # <class 'xblock.mixins.IndexInfoMixin'>, 
+    # <class 'xblock.mixins.ViewsMixin'>, 
+    # <class 'xblock.core.SharedBlockBase'>, 
+    # <class 'xblock.plugin.Plugin'>, 
+    # <type 'object'>)
+
     
     def definition_to_xml(self, resource_fs):
-        # append any additional xml from Mixin Classes definition_to_xml methods
-        # CourseModuleDescriptor and its superclass take resource_fs
-        # as arg but return an xml object
-        # TODO: this may not be right
+        """
+        append any additional xml from Mixin Classes definition_to_xml methods
+        """
+        
+        # needs to call definition_to_xml on SequenceDescriptor class first
+        # and then append XML from there.  CourseDescriptor's definiton_to_xml calls
+        # super() which runs SequenceDescriptor's, then adds, textbooks xml, then
+        # explicitly calls LicenseMixin's add_license_to_xml()
 
-        xmlobj = super(XMLDefinitionChainingMixin, self).definition_to_xml(resource_fs)
+        xmlobj = resource_fs  # not really an XML object but first called needs this val.
+        mro = list(inspect.getmro(type(self)))
+        mro.reverse()
+        dont_call_twice = (str(self.__class__), 
+                           "<class 'xblock.internal.CourseDescriptorWithMixins'>",  # generated class name
+                           str(course_module.CourseDescriptor), 
+                           str(XMLDefinitionChainingMixin),
+                           str(xml_module.XmlParserMixin)
+                           )
 
-        super_bases = super(XMLDefinitionChainingMixin, self).__bases__
+        for klass in mro:
+            if str(klass) in dont_call_twice: 
+                continue
 
-        for i in range(1, len(super_bases)):  # don't include this base
-            klass = super_bases(i)
-            try:
-                xmlobj = klass.append_definition_to_xml(self, xmlobj)
-            except AttributeError:
-                pass
-            
+            if type(getattr(klass, 'definition_to_xml', None)) == instancemethod:
+                try:
+                    xmlobj = klass.definition_to_xml(self, xmlobj)
+                except NotImplementedError:  # some base classes raise this
+                    continue
+
         return xmlobj
 
-    @classmethod
-    def definition_from_xml(cls, xml_object, system):
-        # update definition from Mixin Classes definition_from_xml methods
-        # return definition, children
-        # TODO: this may not be right
+    # @classmethod
+    # def definition_from_xml(cls, xml_object, system):
+    #     # update definition from Mixin Classes definition_from_xml methods
+    #     # return definition, children
+    #     # TODO: this may not be right
 
-        definition, children = super(XMLDefinitionChainingMixin, cls).definition_from_xml(xml_object, system)
-        super_bases = super(XMLDefinitionChainingMixin, cls).__bases__
+    #     definition, children = super(XMLDefinitionChainingMixin, cls).definition_from_xml(xml_object, system)
+    #     super_bases = super(XMLDefinitionChainingMixin, cls).__bases__
 
-        for i in range(1, len(super_bases)):  # don't include this base
-            klass = super_bases(i)
-            try:
-                definition, children = klass.update_definition_from_xml(cls, definition, children)
-            except AttributeError:
-                pass
+    #     for i in range(1, len(super_bases)):  # don't include this base
+    #         klass = super_bases(i)
+    #         try:
+    #             definition, children = klass.update_definition_from_xml(cls, definition, children)
+    #         except AttributeError:
+    #             pass
             
-        return definition, children
+    #     return definition, children
 
 
 class CertificatesExtensionMixin(XBlockMixin):
@@ -93,7 +150,14 @@ class CertificatesExtensionMixin(XBlockMixin):
     active_default_cert_created = Boolean(
         default=False,
         scope=Scope.content)
- 
+
+    def definition_to_xml(self, xml_object):
+        print "in CertificatesExtensionMixin definition_to_xml"
+        for field in ('cert_defaults_set', 'active_default_cert_created'):
+            if getattr(self, field, None):
+                xml_object.set(field, str(getattr(self, field)))
+        return xml_object
+
 class CreditsMixin(XBlockMixin):
     """
     Mixin that allows an author to specify a credit provider and a number of credit
@@ -120,6 +184,13 @@ class CreditsMixin(XBlockMixin):
         default=_("hours"),
         scope=Scope.settings,
     )
+
+    def definition_to_xml(self, xml_object):
+        print "in CreditsMixin definition_to_xml"
+        for field in ('credit_provider', 'credits', 'credit_unit'):
+            if getattr(self, field, None):
+                xml_object.set(field, str(getattr(self, field)))
+        return xml_object
 
 
 class InstructionTypeMixin(XBlockMixin):
@@ -150,3 +221,9 @@ class InstructionTypeMixin(XBlockMixin):
         scope=Scope.settings,
     )
 
+    def definition_to_xml(self, xml_object):
+        print "in InstructionTypeMixin definition_to_xml"
+        for field in ('field_of_study', 'instructional_method', 'instruction_location'):
+            if getattr(self, field, None):
+                xml_object.set(field, str(getattr(self, field)))
+        return xml_object

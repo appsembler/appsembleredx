@@ -6,7 +6,7 @@ from appsembleredx import mixins
 
 
 def get_CourseDescriptor_mixins():
-	new_mixins = [mixins.CertificatesExtensionMixin, ]
+	new_mixins = [mixins.XMLDefinitionChainingMixin, mixins.CertificatesExtensionMixin, ]
 	if app_settings.ENABLE_CREDITS_EXTRA_FIELDS:
 		new_mixins.append(mixins.CreditsMixin)
 	if app_settings.ENABLE_INSTRUCTION_TYPE_EXTRA_FIELDS:
