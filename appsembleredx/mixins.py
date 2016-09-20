@@ -89,7 +89,7 @@ class XMLDefinitionChainingMixin(XBlockMixin):
     
     def definition_to_xml(self, resource_fs):
         """
-        append any additional xml from Mixin Classes definition_to_xml methods
+        append any additional xml from Mixin Classes' definition_to_xml methods
         """
         
         # needs to call definition_to_xml on SequenceDescriptor class first
@@ -119,23 +119,31 @@ class XMLDefinitionChainingMixin(XBlockMixin):
 
         return xmlobj
 
-    # @classmethod
-    # def definition_from_xml(cls, xml_object, system):
-    #     # update definition from Mixin Classes definition_from_xml methods
-    #     # return definition, children
-    #     # TODO: this may not be right
+    @classmethod
+    def definition_from_xml(cls, definition, children):
+        """
+        set field values from Mixin Classes' definition_from_xml methods
+        """        
+        mro = list(inspect.getmro(cls))
+        mro.reverse()
+        dont_call_twice = (str(cls), 
+                           "<class 'xblock.internal.CourseDescriptorWithMixins'>",  # generated class name
+                           str(course_module.CourseDescriptor), 
+                           str(XMLDefinitionChainingMixin),
+                           str(xml_module.XmlParserMixin)
+                           )
 
-    #     definition, children = super(XMLDefinitionChainingMixin, cls).definition_from_xml(xml_object, system)
-    #     super_bases = super(XMLDefinitionChainingMixin, cls).__bases__
+        for klass in mro:
+            if str(klass) in dont_call_twice: 
+                continue
 
-    #     for i in range(1, len(super_bases)):  # don't include this base
-    #         klass = super_bases(i)
-    #         try:
-    #             definition, children = klass.update_definition_from_xml(cls, definition, children)
-    #         except AttributeError:
-    #             pass
-            
-    #     return definition, children
+            if type(getattr(klass, 'definition_to_xml', None)) == instancemethod:
+                try:
+                    definition, children = klass.definition_from_xml(definition, children)
+                except NotImplementedError:  # some base classes raise this
+                    continue
+
+        return definition, children
 
 
 class CertificatesExtensionMixin(XBlockMixin):
@@ -150,6 +158,11 @@ class CertificatesExtensionMixin(XBlockMixin):
     active_default_cert_created = Boolean(
         default=False,
         scope=Scope.content)
+
+    @classmethod
+    def definition_from_xml(cls, definition, children):
+        print "in CertificatesExtensionMixin definition_to_xml"
+        return definition, children
 
     def definition_to_xml(self, xml_object):
         print "in CertificatesExtensionMixin definition_to_xml"
@@ -184,6 +197,11 @@ class CreditsMixin(XBlockMixin):
         default=_("hours"),
         scope=Scope.settings,
     )
+
+    @classmethod
+    def definition_from_xml(cls, definition, children):
+        print "in CreditsMixin definition_to_xml"
+        return definition, children
 
     def definition_to_xml(self, xml_object):
         print "in CreditsMixin definition_to_xml"
@@ -220,6 +238,11 @@ class InstructionTypeMixin(XBlockMixin):
         default=COURSE_INSTRUCTION_LOCATION_DEFAULT,
         scope=Scope.settings,
     )
+
+    @classmethod
+    def definition_from_xml(cls, definition, children):
+        print "in InstructionTypeMixin definition_to_xml"
+        return definition, children
 
     def definition_to_xml(self, xml_object):
         print "in InstructionTypeMixin definition_to_xml"
