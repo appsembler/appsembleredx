@@ -47,7 +47,7 @@ class XMLDefinitionChainingMixin(XBlockMixin):
     for this to work
     """
 
-    # (Pdb) mro  (of self)
+    # mro  (of self on a course)
     # (<class 'xblock.internal.CourseDescriptorWithMixins'>, 
     # <class 'xmodule.course_module.CourseDescriptor'>, 
     # <class 'appsembleredx.mixins.XMLDefinitionChainingMixin'>, 

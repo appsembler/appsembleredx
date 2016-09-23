@@ -38,10 +38,16 @@ class Command(BaseCommand):
                              dest='all',
                              default=False,
                              help='Reindex all courses')
+    replace_option = make_option('--replace',
+                             action='store_true',
+                             dest='replace',
+                             default=False,
+                             help='Replace existing certificates')
 
-    option_list = BaseCommand.option_list + (all_option,)
+    option_list = BaseCommand.option_list + (all_option, replace_option)
 
     CONFIRMATION_PROMPT = u"Setting up all courses might be a time consuming operation. Do you want to continue?"
+    REPLACE_CONFIRMATION_PROMPT = u"Are you sure you want to replace all existing certificates?  This should only be used to fix a problem."
 
     def _parse_course_key(self, raw_value):
         """ Parses course key from string """
@@ -61,9 +67,11 @@ class Command(BaseCommand):
         So, there could be no better docstring than emphasize this once again.
         """
         all_option = options.get('all', False)
+        replace_option = options.get('replace', False)
+        replace_certs = False
 
         if len(args) == 0 and not all_option:
-            raise CommandError(u"appsembler_setup_courses requires one or more arguments: <course_id>")
+            raise CommandError(u"appsembler_setup_courses requires one or more arguments: <course_id>, or --all")
 
         store = modulestore()
 
@@ -79,11 +87,20 @@ class Command(BaseCommand):
             # in case course keys are provided as arguments
             course_keys = map(self._parse_course_key, args)
 
+        if replace_option:
+            if query_yes_no(self.REPLACE_CONFIRMATION_PROMPT, default="no"):
+                replace_certs = True
+                # set active_default_cert_created to False for courses
+                for key in course_keys:
+                    course = store.get_course(key)
+                    course.active_default_cert_created = False
+                    course.save()
+
         for course_key in course_keys:
         	# call functions that are normally signal handlers 
 			signals._default_mode_on_course_publish(store.__class__, course_key)
 			signals._change_cert_defaults_on_pre_publish(store.__class__, course_key)
 			signals._enable_self_generated_certs_on_publish(store.__class__, course_key)
-			signals._make_default_active_certificate(store.__class__, course_key)
+			signals._make_default_active_certificate(store.__class__, course_key, replace_certs)
 
 
