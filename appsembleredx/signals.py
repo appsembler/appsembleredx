@@ -1,24 +1,80 @@
-"""
-Signal handler for setting default course mode expiration dates
-"""
+from functools import partial
+import json
+
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.dispatch.dispatcher import receiver
 from xmodule.modulestore.django import SignalHandler, modulestore
+
+from cache_toolbox.core import del_cached_content
+from xmodule.contentstore.django import contentstore
+from xmodule.contentstore.content import StaticContent
+from django.core.files.storage import get_storage_class
 
 from course_modes.models import CourseMode, CourseModeExpirationConfig
 from certificates import models as cert_models
 from contentstore.views import certificates as store_certificates
 
-
 from appsembleredx.app_settings import (
     DEFAULT_COURSE_MODE_SLUG, 
     mode_name_from_slug, 
     USE_OPEN_ENDED_CERTS_DEFAULTS,
-    ALWAYS_ENABLE_SELF_GENERATED_CERTS
+    ALWAYS_ENABLE_SELF_GENERATED_CERTS,
+    DEFAULT_CERT_SIGNATORIES,
 )
 
+DEFAULT_CERT = """
+    {{"course_title": "", "name": "Default", "is_active": true, 
+    "signatories": {}, "version": 1, "editing": false, 
+    "description": "Default certificate"}}
+"""
 
-DEFAULT_CERT = '{"course_title": "", "name": "Default", "is_active": true, "signatories": [], "version": 1, "editing": false, "description": "Default certificate"}'
+
+def make_default_cert(course_key):
+    """
+    Add any signatories to default cert string and return the string
+    """
+
+    default_cert = DEFAULT_CERT
+
+    if DEFAULT_CERT_SIGNATORIES:
+        signatories = DEFAULT_CERT_SIGNATORIES
+        for i, sig in enumerate(signatories):
+            default_cert_signatory = sig
+            default_cert_signatory['id'] = i
+            theme_asset_path = sig['signature_image_path']
+            sig_img_path = store_theme_signature_img_as_asset(course_key, theme_asset_path)
+            sig['signature_image_path'] = sig_img_path
+        default_cert_signatories = json.dumps(signatories)
+        return default_cert.format(default_cert_signatories)
+        
+    else:
+        return default_cert.format("")
+
+
+def store_theme_signature_img_as_asset(course_key, theme_asset_path):
+    """ 
+    to be able to edit or delete signatories and Certificates properly
+    we must store signature PNG file as course content asset.
+    Store file from theme as asset.
+    Return static asset URL path
+    """
+    filename = theme_asset_path.split('/')[-1]
+    static_storage = get_storage_class(settings.STATICFILES_STORAGE)()
+    path = static_storage.path(theme_asset_path)
+
+    content_loc = StaticContent.compute_location(course_key, theme_asset_path)
+    # TODO: exception if not png
+    sc_partial = partial(StaticContent, content_loc, filename, 'image/png')
+    with open(path, 'rb') as imgfile:
+        content = sc_partial(imgfile.read())
+   
+    # then commit the content
+    contentstore().save(content)
+    del_cached_content(content.location)
+
+    # return a path to the asset
+    return "/"+content.location.to_deprecated_string()
 
 
 @receiver(SignalHandler.course_published)
@@ -85,11 +141,12 @@ def _make_default_active_certificate(sender, course_key, replace=False, **kwargs
 
     store = modulestore()
     course = store.get_course(course_key)
-    if course.active_default_cert_created:
+    if course.active_default_cert_created and not replace:
         return        
 
-    default_cert_data = DEFAULT_CERT
-    new_cert = store_certificates.CertificateManager.deserialize_certificate(course, DEFAULT_CERT)
+    default_cert_data = make_default_cert(course_key)
+
+    new_cert = store_certificates.CertificateManager.deserialize_certificate(course, default_cert_data)
     if replace:
         course.certificates['certificates'] = [new_cert.certificate_data,]
     else:

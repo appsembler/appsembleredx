@@ -95,7 +95,6 @@ class Command(BaseCommand):
                     course = store.get_course(key)
                     course.active_default_cert_created = False
                     course.save()
-                    store.update_item(course, course._edited_by)
 
         for course_key in course_keys:
         	# call functions that are normally signal handlers 
