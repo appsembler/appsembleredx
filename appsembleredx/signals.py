@@ -1,3 +1,4 @@
+import copy
 from functools import partial
 import json
 
