@@ -39,15 +39,17 @@ def make_default_cert(course_key):
 
     if DEFAULT_CERT_SIGNATORIES:
         signatories = DEFAULT_CERT_SIGNATORIES
+        updated = []
         for i, sig in enumerate(signatories):
-            default_cert_signatory = sig
+            default_cert_signatory = copy.deepcopy(sig)
             default_cert_signatory['id'] = i
             theme_asset_path = sig['signature_image_path']
             sig_img_path = store_theme_signature_img_as_asset(course_key, theme_asset_path)
-            sig['signature_image_path'] = sig_img_path
-        default_cert_signatories = json.dumps(signatories)
+            default_cert_signatory['signature_image_path'] = sig_img_path
+            updated.append(default_cert_signatory)
+        default_cert_signatories = json.dumps(updated)
         return default_cert.format(default_cert_signatories)
-        
+
     else:
         return default_cert.format("")
 
@@ -114,7 +116,11 @@ def _change_cert_defaults_on_pre_publish(sender, course_key, **kwargs):  # pylin
     course.cert_defaults_set = True
     course.issue_badges = False
     course.save()
-    store.update_item(course, course._edited_by)
+    try:
+        store.update_item(course, course._edited_by)
+    except AttributeError:
+        store.update_item(course, 0)
+
 
 
 @receiver(SignalHandler.course_published)
@@ -153,4 +159,8 @@ def _make_default_active_certificate(sender, course_key, replace=False, **kwargs
         course.certificates['certificates'].append(new_cert.certificate_data)
     course.active_default_cert_created = True 
     course.save()
-    store.update_item(course, course._edited_by)
+    try:
+        store.update_item(course, course._edited_by)
+    except AttributeError:
+        store.update_item(course, 0)
+
