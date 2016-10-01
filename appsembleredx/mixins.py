@@ -35,7 +35,7 @@ def build_field_values(values):
     if type(values).__name__ == 'dict':
         return [{"value": key, "display_name": values[key]['name']} for key in values.keys()]
     elif type(values).__name__ in ('tuple', 'list'):
-        return [{"value": item, "display_name": item} for item in values]
+        return [{"value": item, "display_name": item} for item in values] if len(values) else None
     elif values == None:
         return None
 
