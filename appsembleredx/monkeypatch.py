@@ -1,5 +1,6 @@
 from xmodule import course_module
 from course_modes import models as course_modes_models
+from student.models import LinkedInAddToProfileConfiguration
 
 from appsembleredx import app_settings
 from appsembleredx import mixins
@@ -10,6 +11,7 @@ import logging
 from django.utils import translation
 orig_ugettext = translation.ugettext
 translation.ugettext =  translation.ugettext_noop
+
 from certificates.views import webview
 translation.ugettext = orig_ugettext
 
@@ -40,3 +42,9 @@ logger.warn('Monkeypatching lms.djangoapps.certificates.views.webview._update_co
 orig__update_course_context = webview._update_course_context
 from appsembleredx import views
 webview._update_course_context = views._update_course_context
+
+# no 'honor code', just leave it blank.  Our clients probably won't have codes of honor
+# and if they do they won't miss it. 
+logger.warn('Monkeypatching LinkedIn add to profile honor code cert name')
+orig_MODE_TO_CERT_NAME = LinkedInAddToProfileConfiguration.MODE_TO_CERT_NAME
+del LinkedInAddToProfileConfiguration.MODE_TO_CERT_NAME['honor']

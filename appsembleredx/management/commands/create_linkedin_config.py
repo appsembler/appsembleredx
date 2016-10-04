@@ -19,12 +19,15 @@ class Command(BaseCommand):
             self.stdout.write(style(msg))
         
         company_id = app_settings.LINKEDIN_ADDTOPROFILE_COMPANY_ID
+        # license_id is an optional custom field that may not exist in the profile
+        # introduced in edx-platform appsembler/feature/add-to-linkedin-with-license-id
+        license_id = app_settings.LINKEDIN_ADDTOPROFILE_LICENSE_ID
+
         if not company_id:
         	raise CommandError("You must specify a value for APPSEMBLER_FEATURES['LINKEDIN_ADDTOPROFILE_COMPANY_ID'] in your env.json file")
 
         try:
-        	
-            enable =  models.LinkedInAddToProfileConfiguration(company_identifier=company_id, enabled=True)
+            enable =  models.LinkedInAddToProfileConfiguration(company_identifier=company_id, license_id=license_id or "", enabled=True)
             enable.save()
         except:  # pylint: disable=broad-except
             stdout("Couldn't enable a LinkedIn Add to Profile configuration", style=self.style.ERROR)
