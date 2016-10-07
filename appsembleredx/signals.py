@@ -77,7 +77,7 @@ def store_theme_signature_img_as_asset(course_key, theme_asset_path):
     del_cached_content(content.location)
 
     # return a path to the asset
-    return "/"+content.location.to_deprecated_string()
+    return content.location.to_deprecated_string()
 
 
 @receiver(SignalHandler.course_published)
