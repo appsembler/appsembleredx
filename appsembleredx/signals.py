@@ -76,8 +76,9 @@ def store_theme_signature_img_as_asset(course_key, theme_asset_path):
     contentstore().save(content)
     del_cached_content(content.location)
 
-    # return a path to the asset
-    return content.location.to_deprecated_string()
+    # return a path to the asset.  new style courses will need extra /
+    path_extra = "/" if course_key.to_deprecated_string().startswith("course") else ""
+    return "{}{}".format(path_extra, content.location.to_deprecated_string())
 
 
 @receiver(SignalHandler.course_published)
