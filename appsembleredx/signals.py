@@ -155,6 +155,8 @@ def _make_default_active_certificate(sender, course_key, replace=False, **kwargs
     default_cert_data = make_default_cert(course_key)
 
     new_cert = store_certificates.CertificateManager.deserialize_certificate(course, default_cert_data)
+    if not course.certificates.has_key('certificates'):
+        course.certificates['certificates'] = []
     if replace:
         course.certificates['certificates'] = [new_cert.certificate_data,]
     else:
