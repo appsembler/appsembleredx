@@ -52,7 +52,7 @@ def make_default_cert(course_key):
         return default_cert.format(default_cert_signatories)
 
     else:
-        return default_cert.format("")
+        return default_cert.format("[]")
 
 
 def store_theme_signature_img_as_asset(course_key, theme_asset_path):
