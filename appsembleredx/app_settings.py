@@ -10,7 +10,11 @@ try:
     # courses
     DEFAULT_COURSE_MODE_SLUG = ENV_TOKENS.get("DEFAULT_COURSE_MODE_SLUG", "honor")
     mode_name_from_slug = _(DEFAULT_COURSE_MODE_SLUG.capitalize())
-    DEFAULT_COURSE_MODE = course_modes_models.Mode(DEFAULT_COURSE_MODE_SLUG, mode_name_from_slug, 0, '', 'usd', None, None, None)
+    try:
+        DEFAULT_COURSE_MODE = course_modes_models.Mode(DEFAULT_COURSE_MODE_SLUG, mode_name_from_slug, 0, '', 'usd', None, None, None)
+    except TypeError:
+        # eucalyptus adds new field, bulk_sku
+        DEFAULT_COURSE_MODE = course_modes_models.Mode(DEFAULT_COURSE_MODE_SLUG, mode_name_from_slug, 0, '', 'usd', None, None, None, None)
     
     ENABLE_CREDITS_EXTRA_FIELDS = ENV_TOKENS.get("ENABLE_CREDITS_EXTRA_FIELDS", False)
     CREDIT_PROVIDERS = ENV_TOKENS.get("CREDIT_PROVIDERS", [])
