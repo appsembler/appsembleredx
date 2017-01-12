@@ -23,6 +23,7 @@ COURSE_FIELDS_OF_STUDY = app_settings.COURSE_FIELDS_OF_STUDY
 COURSE_INSTRUCTIONAL_METHOD_DEFAULT =  app_settings.COURSE_INSTRUCTIONAL_METHOD_DEFAULT
 COURSE_INSTRUCTION_LOCATIONS =  app_settings.COURSE_INSTRUCTION_LOCATIONS
 COURSE_INSTRUCTION_LOCATION_DEFAULT =  app_settings.COURSE_INSTRUCTION_LOCATION_DEFAULT
+ACCREDITATION_CONFERRED_HELP = app_settings.ACCREDITATION_CONFERRED_HELP
 
 # this is included as a mixin in xmodule.course_module.CourseDescriptor
 
@@ -198,6 +199,16 @@ class CreditsMixin(XBlockMixin):
         scope=Scope.settings,
     )
 
+    accreditation_conferred = String(
+        display_name=_("Accreditation Conferred"),
+        help=ACCREDITATION_CONFERRED_HELP,
+        default=None,
+        scope=Scope.settings,
+    )
+
+    @classmethod
+    def 
+
     @classmethod
     def definition_from_xml(cls, definition, children):
         print "in CreditsMixin definition_to_xml"
@@ -205,7 +216,7 @@ class CreditsMixin(XBlockMixin):
 
     def definition_to_xml(self, xml_object):
         print "in CreditsMixin definition_to_xml"
-        for field in ('credit_provider', 'credits', 'credit_unit'):
+        for field in ('credit_provider', 'credits', 'credit_unit', 'accreditation_conferred'):
             if getattr(self, field, None):
                 xml_object.set(field, str(getattr(self, field)))
         return xml_object
