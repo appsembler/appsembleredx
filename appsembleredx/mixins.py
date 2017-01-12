@@ -207,9 +207,6 @@ class CreditsMixin(XBlockMixin):
     )
 
     @classmethod
-    def 
-
-    @classmethod
     def definition_from_xml(cls, definition, children):
         print "in CreditsMixin definition_to_xml"
         return definition, children
