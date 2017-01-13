@@ -1,3 +1,5 @@
+from django.conf import settings
+
 from xmodule import course_module
 from course_modes import models as course_modes_models
 from student.models import LinkedInAddToProfileConfiguration
@@ -6,16 +8,27 @@ from appsembleredx import app_settings
 from appsembleredx import mixins
 
 import logging
+logger = logging.getLogger(__name__)
 
 # some trickery here to get around AppRegsitryNotReady error b/c of translation strings otherwise
 from django.utils import translation
 orig_ugettext = translation.ugettext
 translation.ugettext =  translation.ugettext_noop
 
-from certificates.views import webview
-translation.ugettext = orig_ugettext
+if 'cms' in settings.SETTINGS_MODULE:
+	# if we are in CMS we need to mock out unimportable modules
+	# load a fake certificates.views.support module for now
+	class fakemodule(object):
+		__path__ = []
 
-logger = logging.getLogger(__name__)
+	import sys
+	logger.warn("Setting fake certificates.views.support module for CMS.  Not used in Studio")
+	sys.modules['certificates.views.support'] = fakemodule()  # load an emtpty module
+
+from certificates.views import webview
+
+# and then put back the originals
+translation.ugettext = orig_ugettext
 
 
 def get_CourseDescriptor_mixins():
