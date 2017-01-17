@@ -9,8 +9,12 @@ from xmodule.modulestore.django import SignalHandler, modulestore
 
 try:
     from cache_toolbox.core import del_cached_content
-except ImportError:  # moved after Dogwood
-    from openedx.core.djangoapps.contentserver.caching import del_cached_content
+except ImportError:  # moved after eucalyptus.2
+    try:
+       from openedx.core.djangoapps.contentserver.caching import del_cached_content
+    except ImportError:
+        from contentserver.caching import del_cached_content
+
 from xmodule.contentstore.django import contentstore
 from xmodule.contentstore.content import StaticContent
 from django.core.files.storage import get_storage_class
