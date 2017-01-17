@@ -18,6 +18,9 @@ from xmodule.modulestore.django import modulestore
 from appsembleredx import signals
 
 
+logger = logging.getLogger(__name__)
+
+
 class Command(BaseCommand):
     """
     Command to run all appsembleredx per-course setup
@@ -80,7 +83,14 @@ class Command(BaseCommand):
             if query_yes_no(self.CONFIRMATION_PROMPT, default="no"):
                 # in case of --all, get the list of course keys from all courses
                 # that are stored in the modulestore
-                course_keys = [course.id for course in modulestore().get_courses()]
+                course_keys = []
+                try:
+                    for course in modulestore().get_courses():
+                        course_keys.append(course.id)
+                except AttributeError, e:
+                    if 'HiddenDescriptor' in e.message:
+                        logger.warn('Failed on hidden course without id attr')
+                    pass
             else:
                 return
         else:
@@ -97,10 +107,10 @@ class Command(BaseCommand):
                     course.save()
 
         for course_key in course_keys:
-        	# call functions that are normally signal handlers 
-			signals._default_mode_on_course_publish(store.__class__, course_key)
-			signals._change_cert_defaults_on_pre_publish(store.__class__, course_key)
-			signals._enable_self_generated_certs_on_publish(store.__class__, course_key)
-			signals._make_default_active_certificate(store.__class__, course_key, replace_certs)
+            # call functions that are normally signal handlers 
+            signals._default_mode_on_course_publish(store.__class__, course_key)
+            signals._change_cert_defaults_on_pre_publish(store.__class__, course_key)
+            signals._enable_self_generated_certs_on_publish(store.__class__, course_key)
+            signals._make_default_active_certificate(store.__class__, course_key, replace_certs)
 
 
