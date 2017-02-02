@@ -33,10 +33,10 @@ from appsembleredx.app_settings import (
 )
 
 DEFAULT_CERT = """
-    {{"course_title": "", "name": "Default", "is_active": {}, 
-    "signatories": {}, "version": 1, "editing": false, 
+    {{"course_title": "", "name": "Default", "is_active": {},
+    "signatories": {}, "version": 1, "editing": false,
     "description": "Default certificate"}}
-""".format(ACTIVATE_DEFAULT_CERTS)
+"""
 
 
 def make_default_cert(course_key):
@@ -57,10 +57,10 @@ def make_default_cert(course_key):
             default_cert_signatory['signature_image_path'] = sig_img_path
             updated.append(default_cert_signatory)
         default_cert_signatories = json.dumps(updated)
-        return default_cert.format(default_cert_signatories)
+        return default_cert.format(str(ACTIVATE_DEFAULT_CERTS).lower(), default_cert_signatories)
 
     else:
-        return default_cert.format("[]")
+        return default_cert.format(str(ACTIVATE_DEFAULT_CERTS).lower(), "[]")
 
 
 def store_theme_signature_img_as_asset(course_key, theme_asset_path):
@@ -171,7 +171,7 @@ def _make_default_active_certificate(sender, course_key, replace=False, **kwargs
         course.certificates['certificates'] = [new_cert.certificate_data,]
     else:
         course.certificates['certificates'].append(new_cert.certificate_data)
-    course.active_default_cert_created = true
+    course.active_default_cert_created = True
     course.save()
     try:
         store.update_item(course, course._edited_by)
