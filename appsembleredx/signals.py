@@ -123,7 +123,9 @@ def _change_cert_defaults_on_pre_publish(sender, course_key, **kwargs):  # pylin
     course.certificates_show_before_end = True  # deprecated anyhow
     course.cert_html_view_enabled = True
     course.cert_defaults_set = True
-    course.issue_badges = False
+    use_badges = settings.FEATURES.get('ENABLE_OPENBADGES', False)
+    if not use_badges:
+        course.issue_badges = False
     course.save()
     try:
         store.update_item(course, course._edited_by)
