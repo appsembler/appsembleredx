@@ -29,6 +29,7 @@ from appsembleredx.app_settings import (
     USE_OPEN_ENDED_CERTS_DEFAULTS,
     ALWAYS_ENABLE_SELF_GENERATED_CERTS,
     DEFAULT_CERT_SIGNATORIES,
+    ACTIVATE_DEFAULT_CERTS
 )
 
 DEFAULT_CERT = """
@@ -170,7 +171,8 @@ def _make_default_active_certificate(sender, course_key, replace=False, **kwargs
         course.certificates['certificates'] = [new_cert.certificate_data,]
     else:
         course.certificates['certificates'].append(new_cert.certificate_data)
-    course.active_default_cert_created = True 
+    if ACTIVATE_DEFAULT_CERTS:
+        course.active_default_cert_created = True 
     course.save()
     try:
         store.update_item(course, course._edited_by)
