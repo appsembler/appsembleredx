@@ -29,7 +29,8 @@ from appsembleredx.app_settings import (
     USE_OPEN_ENDED_CERTS_DEFAULTS,
     ALWAYS_ENABLE_SELF_GENERATED_CERTS,
     DEFAULT_CERT_SIGNATORIES,
-    ACTIVATE_DEFAULT_CERTS
+    ACTIVATE_DEFAULT_CERTS,
+    DISABLE_COURSE_COMPLETION_BADGES
 )
 
 DEFAULT_CERT = """
@@ -125,7 +126,7 @@ def _change_cert_defaults_on_pre_publish(sender, course_key, **kwargs):  # pylin
     course.cert_html_view_enabled = True
     course.cert_defaults_set = True
     use_badges = settings.FEATURES.get('ENABLE_OPENBADGES', False)
-    if not use_badges:
+    if not use_badges or DISABLE_COURSE_COMPLETION_BADGES:
         course.issue_badges = False
     course.save()
     try:
