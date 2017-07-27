@@ -151,11 +151,16 @@ def _enable_self_generated_certs_on_publish(sender, course_key, **kwargs):  # py
 
 
 @receiver(SignalHandler.pre_publish)
-def _make_default_active_certificate(sender, course_key, replace=False, **kwargs):  # pylint: disable=unused-argument
+def _make_default_active_certificate(sender, course_key, replace=False, force=False, **kwargs):  # pylint: disable=unused-argument
     """
-    Create an active default certificate on the course
+    Create an active default certificate on the course.  If we pass replace=True, it will 
+    overwrite existing active certs.  If we pass force=True (the management command always
+    does), then it won't care if we are using open ended cert defaults.  We do the latter 
+    since a customer might wish not to enable student-generated certs but still have a 
+    default certificate ready, for example, if they want instructors to generate the HTML 
+    certs.
     """
-    if not USE_OPEN_ENDED_CERTS_DEFAULTS:
+    if not USE_OPEN_ENDED_CERTS_DEFAULTS and not force:
         return
 
     store = modulestore()

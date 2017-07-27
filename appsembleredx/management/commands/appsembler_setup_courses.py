@@ -111,6 +111,11 @@ class Command(BaseCommand):
             signals._default_mode_on_course_publish(store.__class__, course_key)
             signals._change_cert_defaults_on_pre_publish(store.__class__, course_key)
             signals._enable_self_generated_certs_on_publish(store.__class__, course_key)
-            signals._make_default_active_certificate(store.__class__, course_key, replace_certs)
+            signals._make_default_active_certificate(
+                store.__class__, 
+                course_key, 
+                replace_certs, 
+                True  # always force when using command
+            )
 
 
