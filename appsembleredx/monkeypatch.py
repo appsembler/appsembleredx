@@ -15,6 +15,7 @@ from django.utils import translation
 orig_ugettext = translation.ugettext
 translation.ugettext =  translation.ugettext_noop
 
+
 if 'cms' in settings.SETTINGS_MODULE:
 	# if we are in CMS we need to mock out unimportable modules
 	# load a fake certificates.views.support module for now
@@ -26,6 +27,8 @@ if 'cms' in settings.SETTINGS_MODULE:
 	sys.modules['certificates.views.support'] = fakemodule()  # load an emtpty module
 
 from certificates.views import webview
+from certificates.signals import enable_self_generated_certs
+from lms.djangoapps.certificates.signals import enable_self_generated_certs as enable_self_generated_certs_fullpath
 
 # and then put back the originals
 translation.ugettext = orig_ugettext
@@ -61,3 +64,14 @@ webview._update_course_context = views._update_course_context
 logger.warn('Monkeypatching LinkedIn add to profile honor code cert name')
 orig_MODE_TO_CERT_NAME = LinkedInAddToProfileConfiguration.MODE_TO_CERT_NAME
 del LinkedInAddToProfileConfiguration.MODE_TO_CERT_NAME['honor']
+
+
+# override certificates handler which always enables self-gen'd certs for self-paced courses
+# so that it only enables self-gen'd certs on self-paced if we set feature flag for it
+# we have to disable celery tasks already registered for signal handlers in edx-platform
+logger.warn('Monkeypatching lms.djangoapps.certificates.signals.enable_self_generated_certs to limit enabling of self-generated certs on self-paced courses by feature flag.')
+orig_enable_self_generated_certs = enable_self_generated_certs
+# task seems to be registered twice, as 'certificates.signals.enable_self_generated_certs', and
+# 'lms.djangoapps.certificates.signals.enable_self_generated_certs'
+enable_self_generated_certs.delay = lambda course_key:None
+enable_self_generated_certs_fullpath.delay = lambda course_key:None
