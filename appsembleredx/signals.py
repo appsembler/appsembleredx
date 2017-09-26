@@ -6,6 +6,8 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.dispatch.dispatcher import receiver
 from xmodule.modulestore.django import SignalHandler, modulestore
+from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
+from opaque_keys.edx.keys import CourseKey
 
 try:
     from cache_toolbox.core import del_cached_content
@@ -21,13 +23,13 @@ from django.core.files.storage import get_storage_class
 
 from course_modes.models import CourseMode, CourseModeExpirationConfig
 from certificates import models as cert_models
-from contentstore.views import certificates as store_certificates
 
 from appsembleredx.app_settings import (
     DEFAULT_COURSE_MODE_SLUG, 
     mode_name_from_slug, 
     USE_OPEN_ENDED_CERTS_DEFAULTS,
     ALWAYS_ENABLE_SELF_GENERATED_CERTS,
+    DISABLE_SELF_GENERATED_CERTS_FOR_SELF_PACED,
     DEFAULT_CERT_SIGNATORIES,
     ACTIVATE_DEFAULT_CERTS,
     DISABLE_COURSE_COMPLETION_BADGES
@@ -135,19 +137,26 @@ def _change_cert_defaults_on_pre_publish(sender, course_key, **kwargs):  # pylin
         store.update_item(course, 0)
 
 
-
 @receiver(SignalHandler.course_published)
-def _enable_self_generated_certs_on_publish(sender, course_key, **kwargs):  # pylint: disable=unused-argument
+def enable_self_generated_certs(sender, course_key, **kwargs):  # pylint: disable=unused-argument
     """
-    If feature is enabled, always enable self generated certs on published
-    courses
+    If not already enabled, enable self-generated certificates on course if:
+    course is a self-paced course and self-generated certs on self-paced not explicitly disabled
+    course is not self-paced and self-generated certs are explicitly enabled
     """
-    if not ALWAYS_ENABLE_SELF_GENERATED_CERTS:
+    course_key = unicode(course_key)
+    course_key = CourseKey.from_string(course_key)
+    course = CourseOverview.get_from_id(course_key)
+    is_enabled_for_course = cert_models.CertificateGenerationCourseSetting.is_enabled_for_course(course_key)
+    if is_enabled_for_course:
         return
-    store = modulestore()
-    course = store.get_course(course_key)
-    enabled = cert_models.CertificateGenerationCourseSetting(course_key=course_key, enabled=True)
-    enabled.save()
+
+    if course.self_paced and DISABLE_SELF_GENERATED_CERTS_FOR_SELF_PACED:
+        return
+
+    if not course.self_paced and not ALWAYS_ENABLE_SELF_GENERATED_CERTS:
+        return
+    cert_models.CertificateGenerationCourseSetting.set_enabled_for_course(course_key, True)
 
 
 @receiver(SignalHandler.pre_publish)
@@ -170,6 +179,7 @@ def _make_default_active_certificate(sender, course_key, replace=False, force=Fa
 
     default_cert_data = make_default_cert(course_key)
 
+    from contentstore.views import certificates as store_certificates
     new_cert = store_certificates.CertificateManager.deserialize_certificate(course, default_cert_data)
     if not course.certificates.has_key('certificates'):
         course.certificates['certificates'] = []
@@ -183,4 +193,3 @@ def _make_default_active_certificate(sender, course_key, replace=False, force=Fa
         store.update_item(course, course._edited_by)
     except AttributeError:
         store.update_item(course, 0)
-
