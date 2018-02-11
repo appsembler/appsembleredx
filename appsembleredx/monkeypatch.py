@@ -39,8 +39,23 @@ def get_CourseDescriptor_mixins():
 	if app_settings.ENABLE_CREDITS_EXTRA_FIELDS:
 		new_mixins.append(mixins.CreditsMixin)
 	if app_settings.ENABLE_INSTRUCTION_TYPE_EXTRA_FIELDS:
-		new_mixins.append(mixins.InstructionTypeMixin)	
+		new_mixins.append(mixins.InstructionTypeMixin)
 	return tuple(new_mixins)
+
+
+def _update_course_context(request, context, course, platform_name):
+	"""
+	Course-related context for certificate webview, extended
+	with Mixin fields
+	"""
+
+	orig__update_course_context(request, context, course, platform_name)
+
+	# add our course extension fields
+	course_mixins = get_CourseDescriptor_mixins()
+	for mixin in course_mixins:
+		for f in mixin.fields:
+			context[f] = getattr(course, f)
 
 
 logger.warn('Monkeypatching course_module.CourseDescriptor to add Appsembler Mixins')
@@ -57,7 +72,7 @@ course_modes_models.CourseMode.DEFAULT_MODE = app_settings.DEFAULT_COURSE_MODE
 logger.warn('Monkeypatching lms.djangoapps.certificates.views.webview._update_course_context to extend with Appsembler Mixin fields')
 orig__update_course_context = webview._update_course_context
 from appsembleredx import views
-webview._update_course_context = views._update_course_context
+webview._update_course_context = _update_course_context
 
 # no 'honor code', just leave it blank.  Our clients probably won't have codes of honor
 # and if they do they won't miss it. 
