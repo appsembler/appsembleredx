@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 # some trickery here to get around AppRegsitryNotReady error b/c of translation strings otherwise
 from django.utils import translation
 orig_ugettext = translation.ugettext
-translation.ugettext =  translation.ugettext_noop
+translation.ugettext =  translation.ugettext_lazy
 
 
 if 'cms' in settings.SETTINGS_MODULE:
