@@ -1,6 +1,7 @@
 import copy
-from functools import partial
+from functools import partial, wraps
 import json
+import logging
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
@@ -21,25 +22,30 @@ from xmodule.contentstore.django import contentstore
 from xmodule.contentstore.content import StaticContent
 from django.core.files.storage import get_storage_class
 
-from course_modes.models import CourseMode, CourseModeExpirationConfig
+from course_modes.models import CourseMode
 from certificates import models as cert_models
 
-from appsembleredx.app_settings import (
-    DEFAULT_COURSE_MODE_SLUG, 
-    mode_name_from_slug, 
-    USE_OPEN_ENDED_CERTS_DEFAULTS,
-    ALWAYS_ENABLE_SELF_GENERATED_CERTS,
-    DISABLE_SELF_GENERATED_CERTS_FOR_SELF_PACED,
-    DEFAULT_CERT_SIGNATORIES,
-    ACTIVATE_DEFAULT_CERTS,
-    DISABLE_COURSE_COMPLETION_BADGES
-)
+from appsembleredx import app_settings
 
 DEFAULT_CERT = """
     {{"course_title": "", "name": "Default", "is_active": {},
     "signatories": {}, "version": 1, "editing": false,
     "description": "Default certificate"}}
 """
+
+logger = logging.getLogger(__name__)
+
+
+def disable_if_certs_feature_off(func):
+    @wraps(func)
+    def noop_handler(*args, **kwargs):
+        logger.warn('{} signal handler disabled since CERTIFICATES_ENABLED is False'.format(func.__name__))
+
+    if settings.FEATURES.get('CERTIFICATES_ENABLED', False):
+        return func
+    else:        
+        noop_handler.__name__ = 'noop_handler_{}'.format(func.__name__)
+        return noop_handler
 
 
 def make_default_cert(course_key):
@@ -49,8 +55,8 @@ def make_default_cert(course_key):
 
     default_cert = DEFAULT_CERT
 
-    if DEFAULT_CERT_SIGNATORIES:
-        signatories = DEFAULT_CERT_SIGNATORIES
+    if app_settings.DEFAULT_CERT_SIGNATORIES:
+        signatories = app_settings.DEFAULT_CERT_SIGNATORIES
         updated = []
         for i, sig in enumerate(signatories):
             default_cert_signatory = copy.deepcopy(sig)
@@ -60,10 +66,10 @@ def make_default_cert(course_key):
             default_cert_signatory['signature_image_path'] = sig_img_path
             updated.append(default_cert_signatory)
         default_cert_signatories = json.dumps(updated)
-        return default_cert.format(str(ACTIVATE_DEFAULT_CERTS).lower(), default_cert_signatories)
+        return default_cert.format(str(app_settings.ACTIVATE_DEFAULT_CERTS).lower(), default_cert_signatories)
 
     else:
-        return default_cert.format(str(ACTIVATE_DEFAULT_CERTS).lower(), "[]")
+        return default_cert.format(str(app_settings.ACTIVATE_DEFAULT_CERTS).lower(), "[]")
 
 
 def store_theme_signature_img_as_asset(course_key, theme_asset_path):
@@ -93,20 +99,22 @@ def store_theme_signature_img_as_asset(course_key, theme_asset_path):
 
 
 @receiver(SignalHandler.course_published)
+@disable_if_certs_feature_off
 def _default_mode_on_course_publish(sender, course_key, **kwargs):  # pylint: disable=unused-argument
     """
     Catches the signal that a course has been published in Studio and
     creates a CourseMode in the default mode
     """
     try:
-        default_mode = CourseMode.objects.get(course_id=course_key, mode_slug=DEFAULT_COURSE_MODE_SLUG)
+        default_mode = CourseMode.objects.get(course_id=course_key, mode_slug=app_settings.DEFAULT_COURSE_MODE_SLUG)
     except ObjectDoesNotExist:
-        default_mode = CourseMode(course_id=course_key, mode_slug=DEFAULT_COURSE_MODE_SLUG,
-                                  mode_display_name=mode_name_from_slug)
+        default_mode = CourseMode(course_id=course_key, mode_slug=app_settings.DEFAULT_COURSE_MODE_SLUG,
+                                  mode_display_name=app_settings.mode_name_from_slug)
         default_mode.save()
 
 
 @receiver(SignalHandler.pre_publish)
+@disable_if_certs_feature_off
 def _change_cert_defaults_on_pre_publish(sender, course_key, **kwargs):  # pylint: disable=unused-argument
     """
     Catches the signal that a course has been pre-published in Studio and
@@ -115,7 +123,7 @@ def _change_cert_defaults_on_pre_publish(sender, course_key, **kwargs):  # pylin
     # has to be done this way since it's not possible to monkeypatch the default attrs on the 
     # CourseFields fields
 
-    if not USE_OPEN_ENDED_CERTS_DEFAULTS:
+    if not app_settings.USE_OPEN_ENDED_CERTS_DEFAULTS:
         return
 
     store = modulestore()
@@ -127,8 +135,18 @@ def _change_cert_defaults_on_pre_publish(sender, course_key, **kwargs):  # pylin
     course.certificates_show_before_end = True  # deprecated anyhow
     course.cert_html_view_enabled = True
     course.cert_defaults_set = True
+    course.save()
+    try:
+        store.update_item(course, course._edited_by)
+    except AttributeError:
+        store.update_item(course, 0)
+
+@receiver(SignalHandler.pre_publish)
+def _change_badges_setting_on_pre_publish(sender, course_key, **kwargs):  # pylint: disable=unused-argument
+    store = modulestore()
+    course = store.get_course(course_key)
     use_badges = settings.FEATURES.get('ENABLE_OPENBADGES', False)
-    if not use_badges or DISABLE_COURSE_COMPLETION_BADGES:
+    if not use_badges or app_settings.DISABLE_COURSE_COMPLETION_BADGES:
         course.issue_badges = False
     course.save()
     try:
@@ -136,8 +154,8 @@ def _change_cert_defaults_on_pre_publish(sender, course_key, **kwargs):  # pylin
     except AttributeError:
         store.update_item(course, 0)
 
-
 @receiver(SignalHandler.course_published)
+@disable_if_certs_feature_off
 def enable_self_generated_certs(sender, course_key, **kwargs):  # pylint: disable=unused-argument
     """
     If not already enabled, enable self-generated certificates on course if:
@@ -151,15 +169,16 @@ def enable_self_generated_certs(sender, course_key, **kwargs):  # pylint: disabl
     if is_enabled_for_course:
         return
 
-    if course.self_paced and DISABLE_SELF_GENERATED_CERTS_FOR_SELF_PACED:
+    if course.self_paced and app_settings.DISABLE_SELF_GENERATED_CERTS_FOR_SELF_PACED:
         return
 
-    if not course.self_paced and not ALWAYS_ENABLE_SELF_GENERATED_CERTS:
+    if not course.self_paced and not app_settings.ALWAYS_ENABLE_SELF_GENERATED_CERTS:
         return
     cert_models.CertificateGenerationCourseSetting.set_enabled_for_course(course_key, True)
 
 
 @receiver(SignalHandler.pre_publish)
+@disable_if_certs_feature_off
 def _make_default_active_certificate(sender, course_key, replace=False, force=False, **kwargs):  # pylint: disable=unused-argument
     """
     Create an active default certificate on the course.  If we pass replace=True, it will 
@@ -169,7 +188,7 @@ def _make_default_active_certificate(sender, course_key, replace=False, force=Fa
     default certificate ready, for example, if they want instructors to generate the HTML 
     certs.
     """
-    if not USE_OPEN_ENDED_CERTS_DEFAULTS and not force:
+    if not app_settings.USE_OPEN_ENDED_CERTS_DEFAULTS and not force:
         return
 
     store = modulestore()
