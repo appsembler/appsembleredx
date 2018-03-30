@@ -2,7 +2,10 @@
 """
 from functools import wraps
 import json
+import logging
 import mock
+import os
+import unittest
 
 from django.core.exceptions import ObjectDoesNotExist
 
@@ -11,7 +14,7 @@ try:  # LMS
         CertificateGenerationConfiguration, CertificateGenerationCourseSetting)
 except ImportError:  # CMS
     from lms.djangoapps.certificates.models import (
-        CertificateGenerationConfiguration, CertificateGenerationCourseSetting)
+        CertificateGenerationConfiguration, CertificateGenerationCourseSetting) 
 from course_modes.models import CourseMode
 from openedx.core.djangoapps.self_paced.models import SelfPacedConfiguration
 from xmodule.modulestore.django import modulestore
@@ -19,6 +22,9 @@ from xmodule.modulestore.tests.factories import CourseFactory
 from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
 
 from appsembleredx import signals
+
+
+logger = logging.getLogger(__name__)
 
 
 def certs_feature_enabled(func):
@@ -181,19 +187,62 @@ class CertsCreationSignalsTest(BaseCertSignalsTestCase):
         if certificates feature is not enabled.
     """
 
+    # def test_store_theme_signature_img_as_asset(self):
+    #     """ Verify that an file passed as a signature image is stored as a course content asset
+    #     """
+    #     # assume we have the image stored properly in a theme directory
+    #     path = ""
+    #     signals.store_theme_signature_img_as_asset(self.course.id, path)
+
+    @unittest.skipUnless(os.environ.get('SERVICE_VARIANT', None) == 'cms', 'only runs in CMS test context')
     def test_make_default_cert_string(self):
         """ Verify helper function that generates a string for default certificate creation
             that can be deserialized to a dictionary with proper values
         """
+        from contentstore.views.certificates import CertificateValidationError
+
         self.mock_app_settings.DEFAULT_CERT_SIGNATORIES = {}
         self.mock_app_settings.ACTIVATE_DEFAULT_CERTS = True
         with mock.patch('appsembleredx.signals.app_settings', new=self.mock_app_settings):
             cert_string = signals.make_default_cert(self.course.id)
-            to_dict = json.loads(cert_string)
-            self.assertEqual(to_dict["course_title"], "")
-            self.assertEqual(to_dict["name"], "Default")
-            self.assertTrue(to_dict["is_active"])
-            self.assertEqual(to_dict["signatories"], [])
-            self.assertEqual(to_dict["version"], 1)
-            self.assertFalse(to_dict["editing"])
-            self.assertEqual(to_dict["description"], "Default certificate")
+            cert_dict = json.loads(cert_string)
+            self.assertEqual(cert_dict["course_title"], "")
+            self.assertEqual(cert_dict["name"], "Default")
+            self.assertTrue(cert_dict["is_active"])
+            self.assertEqual(cert_dict["signatories"], [])
+            self.assertEqual(cert_dict["version"], 1)
+            self.assertFalse(cert_dict["editing"])
+            self.assertEqual(cert_dict["description"], "Default certificate")
+
+            self.mock_app_settings.DEFAULT_CERT_SIGNATORIES = [
+                {
+                  "name": "Name One",
+                  "title": "Some Title, Other Title",
+                  "organization": "organization",
+                },
+            ]
+
+            # must fail with signatory unless there is a signature path value
+            self.assertRaises(CertificateValidationError, signals.make_default_cert, **{"course_key": self.course.id})
+            
+            # self.mock_app_settings.DEFAULT_CERT_SIGNATORIES[0].update(
+            #     {
+            #         "signature_image_path": "/fake/theme/dir/signature_image.jpg"
+            #     }
+            # )
+            # cert_dict = json.loads(cert_string)
+            # self.assertEqual(cert_dict["course_title"], "")
+            # self.assertEqual(cert_dict["name"], "Default")
+            # self.assertTrue(cert_dict["is_active"])
+            # self.assertEqual(cert_dict["version"], 1)
+            # self.assertFalse(cert_dict["editing"])
+            # self.assertEqual(cert_dict["description"], "Default certificate")
+
+            # edge cases: non-ASCII, others...
+            # signatories = cert_dict["signatories"]
+            # self.assertTrue(len(signatories), 1)
+            # self.assertInstance(signatories[0], dict))
+            # self.assertEqual(signatories[0]['name'], 'Name One')
+            # self.assertEqual(signatories[0]['title'], 'Some Title, Other Title')
+            # self.assertEqual(signatories[0]['organization'], 'organization')
+

@@ -2,14 +2,15 @@ import copy
 from functools import partial, wraps
 import json
 import logging
+import os
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.files.storage import get_storage_class
 from django.dispatch.dispatcher import receiver
-from xmodule.modulestore.django import SignalHandler, modulestore
-from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
-from opaque_keys.edx.keys import CourseKey
 
+# TODO: cut a release that will work before Ficus, then remove the following
+# try/except for caching
 try:
     from cache_toolbox.core import del_cached_content
 except ImportError:  # moved after eucalyptus.2
@@ -17,13 +18,20 @@ except ImportError:  # moved after eucalyptus.2
        from openedx.core.djangoapps.contentserver.caching import del_cached_content
     except ImportError:
         from contentserver.caching import del_cached_content
-
-from xmodule.contentstore.django import contentstore
-from xmodule.contentstore.content import StaticContent
-from django.core.files.storage import get_storage_class
-
+try:
+    from contentstore.views import certificates as store_certificates
+except ImportError:
+    try:
+        from cms.djangoapps.contentstore.views import certificates as store_certificates
+    except ImportError:
+        pass  # some of the other imports in certificates will fail in LMS context but they aren't needed
 from course_modes.models import CourseMode
 from certificates import models as cert_models
+from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
+from opaque_keys.edx.keys import CourseKey
+from xmodule.contentstore.django import contentstore
+from xmodule.contentstore.content import StaticContent
+from xmodule.modulestore.django import SignalHandler, modulestore
 
 from appsembleredx import app_settings
 
@@ -38,12 +46,28 @@ DEFAULT_CERT = """
 logger = logging.getLogger(__name__)
 
 
+# TODO: refactor these handlers for DRY
+
 def disable_if_certs_feature_off(func):
     @wraps(func)
     def noop_handler(*args, **kwargs):
         logger.warn('{} signal handler disabled since CERTIFICATES_ENABLED is False'.format(func.__name__))
 
     if settings.FEATURES.get('CERTIFICATES_ENABLED', False):
+        return func
+    else:        
+        noop_handler.__name__ = 'noop_handler_{}'.format(func.__name__)
+        return noop_handler
+
+
+def cms_only(func):
+    """ can only be run in CMS context
+    """
+    @wraps(func)
+    def noop_handler(*args, **kwargs):
+        logger.warn('{} signal handler disabled since not in CMS context'.format(func.__name__))
+
+    if os.environ.get('SERVICE_VARIANT', None) == 'cms':
         return func
     else:        
         noop_handler.__name__ = 'noop_handler_{}'.format(func.__name__)
@@ -63,9 +87,12 @@ def make_default_cert(course_key):
         for i, sig in enumerate(signatories):
             default_cert_signatory = copy.deepcopy(sig)
             default_cert_signatory['id'] = i
-            theme_asset_path = sig['signature_image_path']
-            sig_img_path = store_theme_signature_img_as_asset(course_key, theme_asset_path)
-            default_cert_signatory['signature_image_path'] = sig_img_path
+            try:
+                theme_asset_path = sig['signature_image_path']
+                sig_img_path = store_theme_signature_img_as_asset(course_key, theme_asset_path)
+                default_cert_signatory['signature_image_path'] = sig_img_path
+            except KeyError:
+                raise store_certificates.CertificateValidationError("You cannot store a signatory without a signature path")
             updated.append(default_cert_signatory)
         default_cert_signatories = json.dumps(updated)
         return default_cert.format(str(app_settings.ACTIVATE_DEFAULT_CERTS).lower(), default_cert_signatories)
@@ -181,6 +208,7 @@ def enable_self_generated_certs(sender, course_key, **kwargs):  # pylint: disabl
 
 @receiver(SignalHandler.pre_publish)
 @disable_if_certs_feature_off
+@cms_only
 def _make_default_active_certificate(sender, course_key, replace=False, force=False, **kwargs):  # pylint: disable=unused-argument
     """
     Create an active default certificate on the course.  If we pass replace=True, it will 
@@ -199,11 +227,6 @@ def _make_default_active_certificate(sender, course_key, replace=False, force=Fa
         return        
 
     default_cert_data = make_default_cert(course_key)
-
-    try:
-        from contentstore.views import certificates as store_certificates
-    except ImportError:
-        from cms.djangoapps.contentstore.views import certificates as store_certificates
     new_cert = store_certificates.CertificateManager.deserialize_certificate(course, default_cert_data)
     if not course.certificates.has_key('certificates'):
         course.certificates['certificates'] = []
