@@ -1,12 +1,17 @@
 """ Unit tests for signal handlers on course publication activity
 """
 from functools import wraps
+import json
 import mock
 
 from django.core.exceptions import ObjectDoesNotExist
 
-from certificates.models import (
-    CertificateGenerationConfiguration, CertificateGenerationCourseSetting)
+try:  # LMS
+    from certificates.models import (
+        CertificateGenerationConfiguration, CertificateGenerationCourseSetting)
+except ImportError:  # CMS
+    from lms.djangoapps.certificates.models import (
+        CertificateGenerationConfiguration, CertificateGenerationCourseSetting)
 from course_modes.models import CourseMode
 from openedx.core.djangoapps.self_paced.models import SelfPacedConfiguration
 from xmodule.modulestore.django import modulestore
@@ -16,31 +21,41 @@ from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
 from appsembleredx import signals
 
 
-class CertsSettingsSignalsTest(ModuleStoreTestCase):
-    """ Tests for signal handlers changing cert-related settings on course
-        publish or pre-publish.  None of the handlers should do anything 
-        if certificates feature is not enabled.
-    """
+def certs_feature_enabled(func):
+    @wraps(func)
+    @mock.patch.dict('appsembleredx.signals.settings.FEATURES', {'CERTIFICATES_ENABLED': True})
+    def with_certs_enabled(*args, **kwargs):
+        # reload to re-evaluate the decorated methods with new setting
+        reload(signals)
+        return func(*args, **kwargs)
+
+    return with_certs_enabled
+
+
+class BaseCertSignalsTestCase(ModuleStoreTestCase):
 
     def setUp(self):
-        super(CertsSettingsSignalsTest, self).setUp()
-        # Enable certificates feature overall
-        CertificateGenerationConfiguration.objects.create(enabled=True)
+        super(BaseCertSignalsTestCase, self).setUp()
         # allow self-paced courses
         SelfPacedConfiguration(enabled=True).save()
         self.course = CourseFactory.create(self_paced=True)
         self.store = modulestore()
         self.mock_app_settings = mock.Mock()
 
-    def certs_feature_enabled(func):
-        @wraps(func)
-        @mock.patch.dict('appsembleredx.signals.settings.FEATURES', {'CERTIFICATES_ENABLED': True})
-        def with_certs_enabled(*args, **kwargs):
-            # reload to re-evaluate the decorated methods with new setting
-            reload(signals)
-            return func(*args, **kwargs)
 
-        return with_certs_enabled
+class LMSCertSignalsTestCase(BaseCertSignalsTestCase):
+
+    def setUp(self):
+        super(LMSCertSignalsTestCase, self).setUp()
+        # Enable certificates generation config in db, overall
+        CertificateGenerationConfiguration.objects.create(enabled=True)
+
+
+class CertsSettingsSignalsTest(LMSCertSignalsTestCase):
+    """ Tests for signal handlers changing cert and badge related settings on course
+        publish or pre-publish.  Some of the handlers should not do anything 
+        if certificates feature is not enabled.
+    """
 
     @mock.patch.dict('appsembleredx.signals.settings.FEATURES', {'CERTIFICATES_ENABLED': False})
     def test_signal_handlers_disabler_decorator(self):
