@@ -174,3 +174,26 @@ class CertsSettingsSignalsTest(LMSCertSignalsTestCase):
             signals.enable_self_generated_certs('store', self.course.id)
             course = self.store.get_course(self.course.id)
             self.assertTrue(CertificateGenerationCourseSetting.is_enabled_for_course(course.id))
+
+
+class CertsCreationSignalsTest(BaseCertSignalsTestCase):
+    """ Tests for signal handlers which set up certificates.  None of the handlers should do anything 
+        if certificates feature is not enabled.
+    """
+
+    def test_make_default_cert_string(self):
+        """ Verify helper function that generates a string for default certificate creation
+            that can be deserialized to a dictionary with proper values
+        """
+        self.mock_app_settings.DEFAULT_CERT_SIGNATORIES = {}
+        self.mock_app_settings.ACTIVATE_DEFAULT_CERTS = True
+        with mock.patch('appsembleredx.signals.app_settings', new=self.mock_app_settings):
+            cert_string = signals.make_default_cert(self.course.id)
+            to_dict = json.loads(cert_string)
+            self.assertEqual(to_dict["course_title"], "")
+            self.assertEqual(to_dict["name"], "Default")
+            self.assertTrue(to_dict["is_active"])
+            self.assertEqual(to_dict["signatories"], [])
+            self.assertEqual(to_dict["version"], 1)
+            self.assertFalse(to_dict["editing"])
+            self.assertEqual(to_dict["description"], "Default certificate")
