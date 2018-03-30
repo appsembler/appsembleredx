@@ -27,11 +27,13 @@ from certificates import models as cert_models
 
 from appsembleredx import app_settings
 
+
 DEFAULT_CERT = """
     {{"course_title": "", "name": "Default", "is_active": {},
     "signatories": {}, "version": 1, "editing": false,
     "description": "Default certificate"}}
 """
+
 
 logger = logging.getLogger(__name__)
 
@@ -198,7 +200,10 @@ def _make_default_active_certificate(sender, course_key, replace=False, force=Fa
 
     default_cert_data = make_default_cert(course_key)
 
-    from contentstore.views import certificates as store_certificates
+    try:
+        from contentstore.views import certificates as store_certificates
+    except ImportError:
+        from cms.djangoapps.contentstore.views import certificates as store_certificates
     new_cert = store_certificates.CertificateManager.deserialize_certificate(course, default_cert_data)
     if not course.certificates.has_key('certificates'):
         course.certificates['certificates'] = []
