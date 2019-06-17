@@ -8,6 +8,7 @@ from xblock import fields
 
 log = logging.getLogger(__name__)
 
+
 @login_required
 def index(request):
     context = {}

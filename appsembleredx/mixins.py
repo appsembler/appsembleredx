@@ -20,9 +20,9 @@ CREDIT_PROVIDERS = app_settings.CREDIT_PROVIDERS
 CREDIT_PROVIDERS_DEFAULT = app_settings.CREDIT_PROVIDERS_DEFAULT
 COURSE_INSTRUCTIONAL_METHODS = app_settings.COURSE_INSTRUCTIONAL_METHODS
 COURSE_FIELDS_OF_STUDY = app_settings.COURSE_FIELDS_OF_STUDY
-COURSE_INSTRUCTIONAL_METHOD_DEFAULT =  app_settings.COURSE_INSTRUCTIONAL_METHOD_DEFAULT
-COURSE_INSTRUCTION_LOCATIONS =  app_settings.COURSE_INSTRUCTION_LOCATIONS
-COURSE_INSTRUCTION_LOCATION_DEFAULT =  app_settings.COURSE_INSTRUCTION_LOCATION_DEFAULT
+COURSE_INSTRUCTIONAL_METHOD_DEFAULT = app_settings.COURSE_INSTRUCTIONAL_METHOD_DEFAULT
+COURSE_INSTRUCTION_LOCATIONS = app_settings.COURSE_INSTRUCTION_LOCATIONS
+COURSE_INSTRUCTION_LOCATION_DEFAULT = app_settings.COURSE_INSTRUCTION_LOCATION_DEFAULT
 ACCREDITATION_CONFERRED_HELP = app_settings.ACCREDITATION_CONFERRED_HELP
 
 # this is included as a mixin in xmodule.course_module.CourseDescriptor
@@ -49,50 +49,49 @@ class XMLDefinitionChainingMixin(XBlockMixin):
     """
 
     # mro  (of self on a course)
-    # (<class 'xblock.internal.CourseDescriptorWithMixins'>, 
-    # <class 'xmodule.course_module.CourseDescriptor'>, 
-    # <class 'appsembleredx.mixins.XMLDefinitionChainingMixin'>, 
-    # <class 'appsembleredx.mixins.CertificatesExtensionMixin'>, 
-    # <class 'appsembleredx.mixins.CreditsMixin'>, 
-    # <class 'appsembleredx.mixins.InstructionTypeMixin'>, 
-    # <class 'xmodule.course_module.CourseFields'>, 
-    # <class 'xmodule.seq_module.SequenceDescriptor'>, 
-    # <class 'xmodule.seq_module.SequenceFields'>, 
-    # <class 'xmodule.seq_module.ProctoringFields'>, 
-    # <class 'xmodule.mako_module.MakoModuleDescriptor'>, 
-    # <class 'xmodule.mako_module.MakoTemplateBlockBase'>, 
-    # <class 'xmodule.xml_module.XmlDescriptor'>, 
-    # <class 'xmodule.xml_module.XmlParserMixin'>, 
-    # <class 'xmodule.x_module.XModuleDescriptor'>, 
-    # <class 'xmodule.x_module.HTMLSnippet'>, 
-    # <class 'xmodule.x_module.ResourceTemplates'>, 
-    # <class 'lms.djangoapps.lms_xblock.mixin.LmsBlockMixin'>, 
-    # <class 'xmodule.modulestore.inheritance.InheritanceMixin'>, 
-    # <class 'xmodule.x_module.XModuleMixin'>, 
-    # <class 'xmodule.x_module.XModuleFields'>, 
-    # <class 'xblock.core.XBlock'>, 
-    # <class 'xblock.mixins.XmlSerializationMixin'>, 
-    # <class 'xblock.mixins.HierarchyMixin'>, 
-    # <class 'xmodule.mixin.LicenseMixin'>, 
-    # <class 'xmodule.modulestore.edit_info.EditInfoMixin'>, 
-    # <class 'cms.lib.xblock.authoring_mixin.AuthoringMixin'>, 
-    # <class 'xblock.XBlockMixin'>, 
-    # <class 'xblock.core.XBlockMixin'>, 
-    # <class 'xblock.mixins.ScopedStorageMixin'>, 
-    # <class 'xblock.mixins.RuntimeServicesMixin'>, 
-    # <class 'xblock.mixins.HandlersMixin'>, 
-    # <class 'xblock.mixins.IndexInfoMixin'>, 
-    # <class 'xblock.mixins.ViewsMixin'>, 
-    # <class 'xblock.core.SharedBlockBase'>, 
-    # <class 'xblock.plugin.Plugin'>, 
+    # (<class 'xblock.internal.CourseDescriptorWithMixins'>,
+    # <class 'xmodule.course_module.CourseDescriptor'>,
+    # <class 'appsembleredx.mixins.XMLDefinitionChainingMixin'>,
+    # <class 'appsembleredx.mixins.CertificatesExtensionMixin'>,
+    # <class 'appsembleredx.mixins.CreditsMixin'>,
+    # <class 'appsembleredx.mixins.InstructionTypeMixin'>,
+    # <class 'xmodule.course_module.CourseFields'>,
+    # <class 'xmodule.seq_module.SequenceDescriptor'>,
+    # <class 'xmodule.seq_module.SequenceFields'>,
+    # <class 'xmodule.seq_module.ProctoringFields'>,
+    # <class 'xmodule.mako_module.MakoModuleDescriptor'>,
+    # <class 'xmodule.mako_module.MakoTemplateBlockBase'>,
+    # <class 'xmodule.xml_module.XmlDescriptor'>,
+    # <class 'xmodule.xml_module.XmlParserMixin'>,
+    # <class 'xmodule.x_module.XModuleDescriptor'>,
+    # <class 'xmodule.x_module.HTMLSnippet'>,
+    # <class 'xmodule.x_module.ResourceTemplates'>,
+    # <class 'lms.djangoapps.lms_xblock.mixin.LmsBlockMixin'>,
+    # <class 'xmodule.modulestore.inheritance.InheritanceMixin'>,
+    # <class 'xmodule.x_module.XModuleMixin'>,
+    # <class 'xmodule.x_module.XModuleFields'>,
+    # <class 'xblock.core.XBlock'>,
+    # <class 'xblock.mixins.XmlSerializationMixin'>,
+    # <class 'xblock.mixins.HierarchyMixin'>,
+    # <class 'xmodule.mixin.LicenseMixin'>,
+    # <class 'xmodule.modulestore.edit_info.EditInfoMixin'>,
+    # <class 'cms.lib.xblock.authoring_mixin.AuthoringMixin'>,
+    # <class 'xblock.XBlockMixin'>,
+    # <class 'xblock.core.XBlockMixin'>,
+    # <class 'xblock.mixins.ScopedStorageMixin'>,
+    # <class 'xblock.mixins.RuntimeServicesMixin'>,
+    # <class 'xblock.mixins.HandlersMixin'>,
+    # <class 'xblock.mixins.IndexInfoMixin'>,
+    # <class 'xblock.mixins.ViewsMixin'>,
+    # <class 'xblock.core.SharedBlockBase'>,
+    # <class 'xblock.plugin.Plugin'>,
     # <type 'object'>)
 
-    
     def definition_to_xml(self, resource_fs):
         """
         append any additional xml from Mixin Classes' definition_to_xml methods
         """
-        
+
         # needs to call definition_to_xml on SequenceDescriptor class first
         # and then append XML from there.  CourseDescriptor's definiton_to_xml calls
         # super() which runs SequenceDescriptor's, then adds, textbooks xml, then
@@ -101,15 +100,15 @@ class XMLDefinitionChainingMixin(XBlockMixin):
         xmlobj = resource_fs  # not really an XML object but first called needs this val.
         mro = list(inspect.getmro(type(self)))
         mro.reverse()
-        dont_call_twice = (str(self.__class__), 
+        dont_call_twice = (str(self.__class__),
                            "<class 'xblock.internal.CourseDescriptorWithMixins'>",  # generated class name
-                           str(course_module.CourseDescriptor), 
+                           str(course_module.CourseDescriptor),
                            str(XMLDefinitionChainingMixin),
                            str(xml_module.XmlParserMixin)
                            )
 
         for klass in mro:
-            if str(klass) in dont_call_twice: 
+            if str(klass) in dont_call_twice:
                 continue
 
             if type(getattr(klass, 'definition_to_xml', None)) == instancemethod:
@@ -124,18 +123,18 @@ class XMLDefinitionChainingMixin(XBlockMixin):
     def definition_from_xml(cls, definition, children):
         """
         set field values from Mixin Classes' definition_from_xml methods
-        """        
+        """
         mro = list(inspect.getmro(cls))
         mro.reverse()
-        dont_call_twice = (str(cls), 
+        dont_call_twice = (str(cls),
                            "<class 'xblock.internal.CourseDescriptorWithMixins'>",  # generated class name
-                           str(course_module.CourseDescriptor), 
+                           str(course_module.CourseDescriptor),
                            str(XMLDefinitionChainingMixin),
                            str(xml_module.XmlParserMixin)
                            )
 
         for klass in mro:
-            if str(klass) in dont_call_twice: 
+            if str(klass) in dont_call_twice:
                 continue
 
             if type(getattr(klass, 'definition_to_xml', None)) == instancemethod:
@@ -171,6 +170,7 @@ class CertificatesExtensionMixin(XBlockMixin):
             if getattr(self, field, None):
                 xml_object.set(field, str(getattr(self, field)))
         return xml_object
+
 
 class CreditsMixin(XBlockMixin):
     """
@@ -220,11 +220,12 @@ class CreditsMixin(XBlockMixin):
 
 
 class InstructionTypeMixin(XBlockMixin):
-    """ 
+    """
     Mixin that allows an author to specify attributes about the course's
     method, field of study, and location of instruction
     """
-    field_of_study = String(display_name=_("Field of Study"),
+    field_of_study = String(
+        display_name=_("Field of Study"),
         help=_("Topic/field classification of the course content"),
         values=build_field_values(COURSE_FIELDS_OF_STUDY),
         scope=Scope.settings,
@@ -239,7 +240,7 @@ class InstructionTypeMixin(XBlockMixin):
         scope=Scope.settings,
     )
 
-    instruction_location = String(        
+    instruction_location = String(
         display_name=_("Instruction Location"),
         help=_("Physical location of insruction; for cases where Open edX courseware is used in a specific physical setting"),
         values=build_field_values(COURSE_INSTRUCTION_LOCATIONS),

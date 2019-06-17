@@ -42,10 +42,10 @@ class Command(BaseCommand):
                              default=False,
                              help='Reindex all courses')
     replace_option = make_option('--replace',
-                             action='store_true',
-                             dest='replace',
-                             default=False,
-                             help='Replace existing certificates')
+                                 action='store_true',
+                                 dest='replace',
+                                 default=False,
+                                 help='Replace existing certificates')
 
     option_list = BaseCommand.option_list + (all_option, replace_option)
 
@@ -79,7 +79,7 @@ class Command(BaseCommand):
         store = modulestore()
 
         if all_option:
-           # if reindexing is done during devstack setup step, don't prompt the user
+            # if reindexing is done during devstack setup step, don't prompt the user
             if query_yes_no(self.CONFIRMATION_PROMPT, default="no"):
                 # in case of --all, get the list of course keys from all courses
                 # that are stored in the modulestore
@@ -107,14 +107,14 @@ class Command(BaseCommand):
                     course.save()
 
         for course_key in course_keys:
-            # call functions that are normally signal handlers 
+            # call functions that are normally signal handlers
             signals._default_mode_on_course_publish(store.__class__, course_key)
             signals._change_cert_defaults_on_pre_publish(store.__class__, course_key)
             signals.enable_self_generated_certs(store.__class__, course_key)
             signals._make_default_active_certificate(
-                store.__class__, 
-                course_key, 
-                replace_certs, 
+                store.__class__,
+                course_key,
+                replace_certs,
                 True  # always force when using command
             )
 
