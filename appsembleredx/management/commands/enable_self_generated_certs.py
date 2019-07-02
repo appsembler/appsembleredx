@@ -19,7 +19,7 @@ class Command(BaseCommand):
         try:
             enable = models.CertificateGenerationConfiguration(enabled=True)
             enable.save()
-        except:  # pylint: disable=broad-except
+        except Exception:  # pylint: disable=broad-except
             stdout("Couldn't enable self-generated certs", style=self.style.ERROR)
             raise CommandError("Couldn't enable self-generated certs")
 

@@ -21,7 +21,7 @@ from xmodule.contentstore.django import contentstore
 from xmodule.contentstore.content import StaticContent
 from django.core.files.storage import get_storage_class
 
-from course_modes.models import CourseMode, CourseModeExpirationConfig
+from course_modes.models import CourseMode
 from certificates import models as cert_models
 
 from appsembleredx.app_settings import (
@@ -160,7 +160,8 @@ def enable_self_generated_certs(sender, course_key, **kwargs):  # pylint: disabl
 
 
 @receiver(SignalHandler.pre_publish)
-def _make_default_active_certificate(sender, course_key, replace=False, force=False, **kwargs):  # pylint: disable=unused-argument
+def _make_default_active_certificate(sender, course_key, replace=False,
+                                     force=False, **kwargs):  # pylint: disable=unused-argument
     """
     Create an active default certificate on the course.  If we pass replace=True, it will
     overwrite existing active certs.  If we pass force=True (the management command always
@@ -181,7 +182,7 @@ def _make_default_active_certificate(sender, course_key, replace=False, force=Fa
 
     from contentstore.views import certificates as store_certificates
     new_cert = store_certificates.CertificateManager.deserialize_certificate(course, default_cert_data)
-    if not course.certificates.has_key('certificates'):
+    if 'certificates' not in course.certificates:
         course.certificates['certificates'] = []
     if replace:
         course.certificates['certificates'] = [new_cert.certificate_data, ]

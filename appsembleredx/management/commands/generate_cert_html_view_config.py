@@ -23,7 +23,8 @@ class Command(BaseCommand):
         try:
             config = app_settings.CERTS_HTML_VIEW_CONFIGURATION
             if not config:
-                raise CommandError("Nothing to generate.  Set APPSEMBLER_CERTS_HTML_VIEW_CONFIGURATION in your lms/cms.env.json")
+                raise CommandError("Nothing to generate.  Set APPSEMBLER_CERTS_HTML_VIEW_CONFIGURATION "
+                                   "in your lms/cms.env.json")
 
             # disable all old configs
             try:
@@ -36,7 +37,7 @@ class Command(BaseCommand):
                 pass
             htmlviewconfig = models.CertificateHtmlViewConfiguration(configuration=json.dumps(config), enabled=True)
             htmlviewconfig.save()
-        except:  # pylint: disable=broad-except
+        except Exception:  # pylint: disable=broad-except
             stdout("Couldn't set an HTML View Configuration for certs", style=self.style.ERROR)
             raise CommandError("Couldn't set an HTML View Configuration for certs")
 

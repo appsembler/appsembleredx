@@ -11,7 +11,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 # some trickery here to get around AppRegsitryNotReady error b/c of translation strings otherwise
-from django.utils import translation
+from django.utils import translation  # noqa
 orig_ugettext = translation.ugettext
 translation.ugettext = translation.ugettext_lazy
 
@@ -24,38 +24,38 @@ if 'cms' in settings.SETTINGS_MODULE:
 
         import sys
         logger.warn("Setting fake certificates.views.support module for CMS.  Not used in Studio")
-        sys.modules['certificates.views.support'] = fakemodule()  # load an emtpty module
+        sys.modules['certificates.views.support'] = fakemodule()  # noqa: load an emtpty module
 
-from certificates.views import webview
-from certificates.signals import enable_self_generated_certs
-from lms.djangoapps.certificates.signals import enable_self_generated_certs as enable_self_generated_certs_fullpath
+from certificates.views import webview  # noqa
+from certificates.signals import enable_self_generated_certs  # noqa
+from lms.djangoapps.certificates.signals import enable_self_generated_certs as enable_self_generated_certs_fullpath  # noqa
 
 # and then put back the originals
 translation.ugettext = orig_ugettext
 
 
 def get_CourseDescriptor_mixins():
-        new_mixins = [mixins.XMLDefinitionChainingMixin, mixins.CertificatesExtensionMixin, ]
-        if app_settings.ENABLE_CREDITS_EXTRA_FIELDS:
-                new_mixins.append(mixins.CreditsMixin)
-        if app_settings.ENABLE_INSTRUCTION_TYPE_EXTRA_FIELDS:
-                new_mixins.append(mixins.InstructionTypeMixin)
-        return tuple(new_mixins)
+    new_mixins = [mixins.XMLDefinitionChainingMixin, mixins.CertificatesExtensionMixin, ]
+    if app_settings.ENABLE_CREDITS_EXTRA_FIELDS:
+        new_mixins.append(mixins.CreditsMixin)
+    if app_settings.ENABLE_INSTRUCTION_TYPE_EXTRA_FIELDS:
+        new_mixins.append(mixins.InstructionTypeMixin)
+    return tuple(new_mixins)
 
 
 def _update_course_context(request, context, course, platform_name):
-        """
-        Course-related context for certificate webview, extended
-        with Mixin fields
-        """
+    """
+    Course-related context for certificate webview, extended
+    with Mixin fields
+    """
 
-        orig__update_course_context(request, context, course, platform_name)
+    orig__update_course_context(request, context, course, platform_name)
 
-        # add our course extension fields
-        course_mixins = get_CourseDescriptor_mixins()
-        for mixin in course_mixins:
-                for f in mixin.fields:
-                        context[f] = getattr(course, f)
+    # add our course extension fields
+    course_mixins = get_CourseDescriptor_mixins()
+    for mixin in course_mixins:
+        for f in mixin.fields:
+            context[f] = getattr(course, f)
 
 
 logger.warn('Monkeypatching course_module.CourseDescriptor to add Appsembler Mixins')
@@ -69,9 +69,10 @@ course_modes_models.CourseMode.DEFAULT_MODE_SLUG = app_settings.DEFAULT_COURSE_M
 orig_DEFAULT_MODE = course_modes_models.CourseMode.DEFAULT_MODE
 course_modes_models.CourseMode.DEFAULT_MODE = app_settings.DEFAULT_COURSE_MODE
 
-logger.warn('Monkeypatching lms.djangoapps.certificates.views.webview._update_course_context to extend with Appsembler Mixin fields')
+logger.warn('Monkeypatching lms.djangoapps.certificates.views.webview._update_course_context '
+            'to extend with Appsembler Mixin fields')
 orig__update_course_context = webview._update_course_context
-from appsembleredx import views
+from appsembleredx import views  # noqa
 webview._update_course_context = _update_course_context
 
 # no 'honor code', just leave it blank.  Our clients probably won't have codes of honor
@@ -84,7 +85,8 @@ del LinkedInAddToProfileConfiguration.MODE_TO_CERT_NAME['honor']
 # override certificates handler which always enables self-gen'd certs for self-paced courses
 # so that it only enables self-gen'd certs on self-paced if we set feature flag for it
 # we have to disable celery tasks already registered for signal handlers in edx-platform
-logger.warn('Monkeypatching lms.djangoapps.certificates.signals.enable_self_generated_certs to limit enabling of self-generated certs on self-paced courses by feature flag.')
+logger.warn('Monkeypatching lms.djangoapps.certificates.signals.enable_self_generated_certs '
+            'to limit enabling of self-generated certs on self-paced courses by feature flag.')
 orig_enable_self_generated_certs = enable_self_generated_certs
 # task seems to be registered twice, as 'certificates.signals.enable_self_generated_certs', and
 # 'lms.djangoapps.certificates.signals.enable_self_generated_certs'

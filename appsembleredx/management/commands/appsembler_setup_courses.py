@@ -26,9 +26,11 @@ class Command(BaseCommand):
     Command to run all appsembleredx per-course setup
 
     Examples:
+        # sets up courses with keys course_id_1 and course_id_2
+        ./manage.py appsembler_setup_courses <course_id_1> <course_id_2>
 
-        ./manage.py appsembler_setup_courses <course_id_1> <course_id_2> - sets up courses with keys course_id_1 and course_id_2
-        ./manage.py appsembler_setup_courses --all - sets up all available courses
+         # sets up all available courses
+        ./manage.py appsembler_setup_courses --all
     """
     help = dedent(__doc__)
 
@@ -50,7 +52,8 @@ class Command(BaseCommand):
     option_list = BaseCommand.option_list + (all_option, replace_option)
 
     CONFIRMATION_PROMPT = u"Setting up all courses might be a time consuming operation. Do you want to continue?"
-    REPLACE_CONFIRMATION_PROMPT = u"Are you sure you want to replace all existing certificates?  This should only be used to fix a problem."
+    REPLACE_CONFIRMATION_PROMPT = (u"Are you sure you want to replace all existing certificates?  "
+                                   "This should only be used to fix a problem.")
 
     def _parse_course_key(self, raw_value):
         """ Parses course key from string """
@@ -117,5 +120,3 @@ class Command(BaseCommand):
                 replace_certs,
                 True  # always force when using command
             )
-
-

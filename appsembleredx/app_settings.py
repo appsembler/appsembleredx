@@ -11,15 +11,18 @@ try:
     DEFAULT_COURSE_MODE_SLUG = ENV_TOKENS.get("DEFAULT_COURSE_MODE_SLUG", "honor")
     mode_name_from_slug = _(DEFAULT_COURSE_MODE_SLUG.capitalize())
     try:
-        DEFAULT_COURSE_MODE = course_modes_models.Mode(DEFAULT_COURSE_MODE_SLUG, mode_name_from_slug, 0, '', 'usd', None, None, None)
+        DEFAULT_COURSE_MODE = course_modes_models.Mode(DEFAULT_COURSE_MODE_SLUG, mode_name_from_slug,
+                                                       0, '', 'usd', None, None, None)
     except TypeError:
         # eucalyptus adds new field, bulk_sku
-        DEFAULT_COURSE_MODE = course_modes_models.Mode(DEFAULT_COURSE_MODE_SLUG, mode_name_from_slug, 0, '', 'usd', None, None, None, None)
+        DEFAULT_COURSE_MODE = course_modes_models.Mode(DEFAULT_COURSE_MODE_SLUG, mode_name_from_slug,
+                                                       0, '', 'usd', None, None, None, None)
 
     ENABLE_CREDITS_EXTRA_FIELDS = ENV_TOKENS.get("ENABLE_CREDITS_EXTRA_FIELDS", False)
     CREDIT_PROVIDERS = ENV_TOKENS.get("CREDIT_PROVIDERS", [])
     CREDIT_PROVIDERS_DEFAULT = ENV_TOKENS.get("CREDIT_PROVIDERS_DEFAULT", None)
-    DEFAULT_ACCREDITATION_HELP = _("Additional or alternative explanation of accreditation conferred, standards met, or similar description.")
+    DEFAULT_ACCREDITATION_HELP = _("Additional or alternative explanation of accreditation conferred, "
+                                   "standards met, or similar description.")
     ACCREDITATION_CONFERRED_HELP = ENV_TOKENS.get("ACCREDITATION_CONFERRED_HELP", DEFAULT_ACCREDITATION_HELP)
 
     ENABLE_INSTRUCTION_TYPE_EXTRA_FIELDS = ENV_TOKENS.get("ENABLE_INSTRUCTION_TYPE_EXTRA_FIELDS", [])
