@@ -13,7 +13,7 @@ try:
     from cache_toolbox.core import del_cached_content
 except ImportError:  # moved after eucalyptus.2
     try:
-       from openedx.core.djangoapps.contentserver.caching import del_cached_content
+        from openedx.core.djangoapps.contentserver.caching import del_cached_content
     except ImportError:
         from contentserver.caching import del_cached_content
 
@@ -25,8 +25,8 @@ from course_modes.models import CourseMode, CourseModeExpirationConfig
 from certificates import models as cert_models
 
 from appsembleredx.app_settings import (
-    DEFAULT_COURSE_MODE_SLUG, 
-    mode_name_from_slug, 
+    DEFAULT_COURSE_MODE_SLUG,
+    mode_name_from_slug,
     USE_OPEN_ENDED_CERTS_DEFAULTS,
     ALWAYS_ENABLE_SELF_GENERATED_CERTS,
     DISABLE_SELF_GENERATED_CERTS_FOR_SELF_PACED,
@@ -67,7 +67,7 @@ def make_default_cert(course_key):
 
 
 def store_theme_signature_img_as_asset(course_key, theme_asset_path):
-    """ 
+    """
     to be able to edit or delete signatories and Certificates properly
     we must store signature PNG file as course content asset.
     Store file from theme as asset.
@@ -82,7 +82,7 @@ def store_theme_signature_img_as_asset(course_key, theme_asset_path):
     sc_partial = partial(StaticContent, content_loc, filename, 'image/png')
     with open(path, 'rb') as imgfile:
         content = sc_partial(imgfile.read())
-   
+
     # then commit the content
     contentstore().save(content)
     del_cached_content(content.location)
@@ -112,7 +112,7 @@ def _change_cert_defaults_on_pre_publish(sender, course_key, **kwargs):  # pylin
     Catches the signal that a course has been pre-published in Studio and
     updates certificate_display_behavior and ...
     """
-    # has to be done this way since it's not possible to monkeypatch the default attrs on the 
+    # has to be done this way since it's not possible to monkeypatch the default attrs on the
     # CourseFields fields
 
     if not USE_OPEN_ENDED_CERTS_DEFAULTS:
@@ -162,11 +162,11 @@ def enable_self_generated_certs(sender, course_key, **kwargs):  # pylint: disabl
 @receiver(SignalHandler.pre_publish)
 def _make_default_active_certificate(sender, course_key, replace=False, force=False, **kwargs):  # pylint: disable=unused-argument
     """
-    Create an active default certificate on the course.  If we pass replace=True, it will 
+    Create an active default certificate on the course.  If we pass replace=True, it will
     overwrite existing active certs.  If we pass force=True (the management command always
-    does), then it won't care if we are using open ended cert defaults.  We do the latter 
-    since a customer might wish not to enable student-generated certs but still have a 
-    default certificate ready, for example, if they want instructors to generate the HTML 
+    does), then it won't care if we are using open ended cert defaults.  We do the latter
+    since a customer might wish not to enable student-generated certs but still have a
+    default certificate ready, for example, if they want instructors to generate the HTML
     certs.
     """
     if not USE_OPEN_ENDED_CERTS_DEFAULTS and not force:
@@ -175,7 +175,7 @@ def _make_default_active_certificate(sender, course_key, replace=False, force=Fa
     store = modulestore()
     course = store.get_course(course_key)
     if course.active_default_cert_created and not replace:
-        return        
+        return
 
     default_cert_data = make_default_cert(course_key)
 
@@ -184,7 +184,7 @@ def _make_default_active_certificate(sender, course_key, replace=False, force=Fa
     if not course.certificates.has_key('certificates'):
         course.certificates['certificates'] = []
     if replace:
-        course.certificates['certificates'] = [new_cert.certificate_data,]
+        course.certificates['certificates'] = [new_cert.certificate_data, ]
     else:
         course.certificates['certificates'].append(new_cert.certificate_data)
     course.active_default_cert_created = True
