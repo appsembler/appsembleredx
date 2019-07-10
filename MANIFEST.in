@@ -1,5 +1,3 @@
-include README.rst
-recursive-include appsembleredx/static *
-recursive-include appsembleredx/templates *
-recursive-include appsembleredx/migrations *
-recursive-include appsembleredx/management *
+include README.md
+include *.py
+include tox.ini
