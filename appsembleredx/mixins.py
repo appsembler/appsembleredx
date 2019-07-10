@@ -5,13 +5,12 @@ import inspect
 from new import instancemethod
 
 from xblock.fields import Scope, String, Float, Boolean, XBlockMixin
-from xblock import internal
 from xmodule import course_module, xml_module
 
 from . import app_settings
 
 # Make '_' a no-op so we can scrape strings
-_ = lambda text: text
+_ = lambda text: text  # noqa
 
 
 CREDITS_VIEW = 'credits_view'
@@ -37,7 +36,7 @@ def build_field_values(values):
         return [{"value": key, "display_name": values[key]['name']} for key in values.keys()]
     elif type(values).__name__ in ('tuple', 'list'):
         return [{"value": item, "display_name": item} for item in values] if len(values) else None
-    elif values == None:
+    elif values is None:
         return None
 
 
@@ -242,7 +241,8 @@ class InstructionTypeMixin(XBlockMixin):
 
     instruction_location = String(
         display_name=_("Instruction Location"),
-        help=_("Physical location of insruction; for cases where Open edX courseware is used in a specific physical setting"),
+        help=_("Physical location of insruction; for cases where Open edX courseware is "
+               "used in a specific physical setting"),
         values=build_field_values(COURSE_INSTRUCTION_LOCATIONS),
         default=COURSE_INSTRUCTION_LOCATION_DEFAULT,
         scope=Scope.settings,

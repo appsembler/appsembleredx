@@ -21,12 +21,13 @@ class Command(BaseCommand):
         company_id = app_settings.LINKEDIN_ADDTOPROFILE_COMPANY_ID
 
         if not company_id:
-            raise CommandError("You must specify a value for APPSEMBLER_FEATURES['LINKEDIN_ADDTOPROFILE_COMPANY_ID'] in your env.json file")
+            raise CommandError("You must specify a value for "
+                               "APPSEMBLER_FEATURES['LINKEDIN_ADDTOPROFILE_COMPANY_ID'] in your env.json file")
 
         try:
             enable = models.LinkedInAddToProfileConfiguration(company_identifier=company_id, enabled=True)
             enable.save()
-        except:  # pylint: disable=broad-except
+        except Exception:  # pylint: disable=broad-except
             stdout("Couldn't enable a LinkedIn Add to Profile configuration", style=self.style.ERROR)
             raise CommandError("Couldn't enable a LinkedIn Add to Profile configuration")
 

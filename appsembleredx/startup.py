@@ -2,7 +2,7 @@
 Django initialization.
 """
 from edxmako import add_lookup
-from appsembleredx import signals
+from appsembleredx import signals  # noqa
 
 
 def run():
