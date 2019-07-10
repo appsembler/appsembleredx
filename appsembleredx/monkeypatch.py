@@ -22,9 +22,9 @@ if 'cms' in settings.SETTINGS_MODULE:
     class fakemodule(object):
         __path__ = []
 
-        import sys
-        logger.warn("Setting fake certificates.views.support module for CMS.  Not used in Studio")
-        sys.modules['certificates.views.support'] = fakemodule()  # noqa: load an emtpty module
+    import sys
+    logger.warn("Setting fake certificates.views.support module for CMS.  Not used in Studio")
+    sys.modules['certificates.views.support'] = fakemodule()  # noqa: load an empty module
 
 from certificates.views import webview  # noqa
 from certificates.signals import enable_self_generated_certs  # noqa
