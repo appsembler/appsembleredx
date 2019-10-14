@@ -72,7 +72,6 @@ course_modes_models.CourseMode.DEFAULT_MODE = app_settings.DEFAULT_COURSE_MODE
 logger.warn('Monkeypatching lms.djangoapps.certificates.views.webview._update_course_context '
             'to extend with Appsembler Mixin fields')
 orig__update_course_context = webview._update_course_context
-from appsembleredx import views  # noqa
 webview._update_course_context = _update_course_context
 
 # no 'honor code', just leave it blank.  Our clients probably won't have codes of honor
